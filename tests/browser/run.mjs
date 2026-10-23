@@ -7,7 +7,7 @@
  *
  *   boot → dashboard → empty library → create a lesson (autosave + URL swap)
  *   → the lesson appears in the library → survives a reload (IndexedDB)
- *   → settings page renders.
+ *   → settings page renders → offline reload from the service worker cache.
  *
  * Run: npm run test:browser   (exit code 1 on any failure)
  *
@@ -239,6 +239,45 @@ async function main() {
         }
         const newErrors = pageErrors.slice(before);
         assert(newErrors.length === 0, `/${route} raised: ${newErrors.slice(0, 2).join(' | ')}`);
+      }
+    });
+
+    await step('offline: service worker precaches the shell and the app boots offline', async () => {
+      // Registration happens at boot; by now the worker must have activated
+      // and claimed this page (sw.js calls skipWaiting + clients.claim).
+      const reg = await page.waitForFunction(async () => {
+        const r = await navigator.serviceWorker.getRegistration();
+        return r?.active ? { scope: r.scope, controlled: Boolean(navigator.serviceWorker.controller) } : false;
+      }, null, { timeout: 15_000 }).then((handle) => handle.jsonValue()).catch(() => null);
+      assert(reg && reg.controlled, 'the page is not controlled by an active service worker');
+
+      // sw.js SHELL currently lists 16 entries; a short precache means addAll
+      // failed (a missing asset) and offline loads would break.
+      const shellEntries = await page.evaluate(async () => {
+        const names = await caches.keys();
+        if (!names.includes('devnotes-shell-v1')) return 0;
+        const cache = await caches.open('devnotes-shell-v1');
+        return (await cache.keys()).length;
+      });
+      assert(shellEntries >= 16, `shell precache incomplete: ${shellEntries}/16 entries`);
+
+      await context.setOffline(true);
+      try {
+        // Full reload: the navigation, index.html fallback, and every lazily
+        // imported module must come from the cache (they were warmed online).
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await page.waitForSelector('#app-shell', { state: 'visible', timeout: 20_000 });
+        const bootHidden = await page.waitForFunction(
+          () => document.querySelector('#boot-status')?.hasAttribute('hidden'),
+          null,
+          { timeout: 10_000 },
+        ).then(() => true).catch(() => false);
+        assert(bootHidden, 'the app did not finish booting while offline');
+
+        await page.evaluate(() => { location.hash = '#/library'; });
+        await page.waitForSelector('#app-shell .page-header h1', { timeout: 10_000 });
+      } finally {
+        await context.setOffline(false);
       }
     });
 

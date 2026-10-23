@@ -80,6 +80,8 @@ DevNotes is a static site. Upload the repository root (everything except `node_m
 - Serve `.webmanifest` as `application/manifest+json`, `.js` as `text/javascript`, `.woff2` as `font/woff2`
 - After a release that changes cached shell assets, bump `CACHE` in `sw.js` so clients drop the old cache
 
+**GitHub Pages:** the repository is published from the `main` branch (Settings → Pages → *Deploy from a branch* → `main` / root) at <https://minkhantthu2692-gif.github.io/DevNotes/>. Every asset path is relative (`./…`), so the app works from a sub-path such as `/DevNotes/` without configuration, and the committed `.nojekyll` file stops Jekyll from rewriting any files.
+
 ## Folder structure
 
 ```
@@ -221,13 +223,16 @@ Both suites were executed against this codebase:
 
 ```sh
 npm test               # unit suite: 87 tests, 6 files  → 87 pass / 0 fail
-npm run test:browser   # browser smoke: 10 steps       → 10 pass / 0 fail
+npm run test:browser   # browser smoke: 11 steps       → 11 pass / 0 fail
+
+# Run the same smoke steps against a deployed copy instead of a local server:
+SMOKE_ORIGIN=https://<user>.github.io/DevNotes npm run test:browser
 ```
 
 - **Unit** (`node --test` + `fake-indexeddb`): validation/normalization (including backup validation rules), search parsing/scoring/flags/highlighting, error classification and backoff, the sync queue (coalescing, claim, failure classes, exhaustion, retry, discard, suspension), repositories (CRUD, revisions, activity coalescing, trash lifecycle, flashcard approval/scheduling, taxonomy dedupe), and import/export (size/parse guards, diffing, merge/replace semantics). `localStorage` is polyfilled in `tests/unit/helpers/env.js`.
-- **Browser** (`playwright-core` + your installed Chrome or Edge — no browser download): serves the repo over HTTP, then verifies boot, dashboard, empty library, lesson creation with autosave and URL swap, **persistence across reload**, settings rendering, **dialog accessibility** (keyboard open, `aria-modal`, Escape closes, focus restored to the trigger), **every route mounting without runtime errors**, and zero uncaught page errors. Set `CHROME_PATH` if your browser lives somewhere non-standard.
+- **Browser** (`playwright-core` + your installed Chrome or Edge — no browser download): serves the repo over HTTP, then verifies boot, dashboard, empty library, lesson creation with autosave and URL swap, **persistence across reload**, settings rendering, **dialog accessibility** (keyboard open, `aria-modal`, Escape closes, focus restored to the trigger), **every route mounting without runtime errors**, **service-worker precache + a full boot while offline**, and zero uncaught page errors. Set `CHROME_PATH` if your browser lives somewhere non-standard. With `SMOKE_ORIGIN` set the local server is skipped and the steps run against that URL — use it to verify a deployment (this project's GitHub Pages copy was validated this way).
 
-Tests requiring real Supabase/Groq credentials (live RLS policies, live OAuth, real proxy rate limits) cannot run offline and are **not** included; the migration's RLS policies should be verified against your project (Supabase provides SQL tests in the dashboard). No test requires network access.
+Tests requiring real Supabase/Groq credentials (live RLS policies, live OAuth, real proxy rate limits) cannot run offline and are **not** included; the migration's RLS policies should be verified against your project (Supabase provides SQL tests in the dashboard). The local suites require no network access; only `SMOKE_ORIGIN` runs do.
 
 ## Security notes
 
