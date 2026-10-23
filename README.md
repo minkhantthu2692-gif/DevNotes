@@ -25,6 +25,8 @@ Your library lives in **IndexedDB in your browser**. Everything works locally an
 - [Troubleshooting](#troubleshooting)
 - [Licenses](#licenses)
 
+Burmese readers: [အပြည့်အဝ ဆက်တင်လမ်းညွှန် (မြန်မာဘာသာ)](SETUP_MY.md) — step-by-step setup for Supabase, GitHub (Pages + OAuth), Google OAuth and Groq AI.
+
 ---
 
 ## Features
