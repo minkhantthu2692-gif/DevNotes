@@ -101,21 +101,9 @@ export function mountSidebar(container) {
     inner.appendChild(nav);
   }
 
-  const footer = h('div', { class: 'sidebar__footer' });
-  footer.appendChild(
-    h('button', {
-      class: 'nav-item',
-      type: 'button',
-      attrs: { 'data-tooltip': 'Search everything (Ctrl+K)' },
-      on: { click: () => import('./palette.js').then((m) => m.openPalette()) },
-    }, [
-      icon('search', 'nav-item__icon'),
-      h('span', { class: 'nav-item__label', text: 'Search & commands' }),
-      h('kbd', { text: 'Ctrl K' }),
-    ]),
-  );
-  inner.appendChild(footer);
-
+  // The sidebar intentionally has NO search entry: the header's search button
+  // opens the same command palette (palette.js), and duplicated controls for
+  // one target are removed by design.
   routeStore.subscribe((state) => setActive(state.path));
   uiStore.subscribe((state) => {
     document.getElementById('app-shell')?.setAttribute('data-nav-open', String(state.navOpen));
