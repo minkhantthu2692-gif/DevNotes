@@ -166,7 +166,7 @@ export default {
               },
             },
           }),
-          h('span', { text: tab.label }),
+          h('span', { class: 'segmented__label', text: tab.label }),
         ])),
       );
 

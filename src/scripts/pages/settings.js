@@ -97,7 +97,7 @@ function segmentedControl(name, options, current, onChange) {
         on: { change: () => option.value !== current && onChange(option.value) },
       }),
       option.icon ? icon(option.icon) : null,
-      h('span', { text: option.label }),
+      h('span', { class: 'segmented__label', text: option.label }),
     ])),
   );
 }

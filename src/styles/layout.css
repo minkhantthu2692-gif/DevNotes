@@ -159,8 +159,7 @@ body {
 .nav-item[aria-current="page"] .nav-item__icon { color: var(--color-accent); }
 .nav-item__icon {
   flex: none;
-  width: 1.125rem;
-  height: 1.125rem;
+  /* The .icon child is already sized by the global .icon rule. */
   color: var(--color-text-faint);
 }
 .nav-item__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -262,7 +261,7 @@ body {
 }
 .icon-btn:hover { background: var(--color-surface-2); color: var(--color-text); }
 .icon-btn[aria-pressed="true"] { background: var(--color-accent-soft); color: var(--color-accent); }
-.icon-btn svg { width: 1.125rem; height: 1.125rem; }
+.icon-btn .icon { width: 1.125rem; height: 1.125rem; }
 
 .topbar__search {
   display: flex;

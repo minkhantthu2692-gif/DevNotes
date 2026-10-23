@@ -327,6 +327,7 @@
   background: var(--color-surface-3);
   color: var(--color-text-muted);
 }
+.chat__avatar .icon { width: 1rem; height: 1rem; }
 
 .chat__msg[data-role="user"] .chat__avatar { background: var(--color-accent-soft); color: var(--color-accent); }
 
@@ -412,6 +413,7 @@
   background: var(--color-surface-3);
   color: var(--color-text-muted);
 }
+.timeline__icon .icon { width: 1rem; height: 1rem; }
 
 .timeline__body { flex: 1; min-width: 0; }
 .timeline__label { font-size: var(--fs-md); overflow-wrap: anywhere; }

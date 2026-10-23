@@ -71,7 +71,7 @@ export default {
         },
       });
       radios.set(value, radio);
-      return h('label', { class: 'segmented__option' }, [radio, h('span', { text: label })]);
+      return h('label', { class: 'segmented__option' }, [radio, h('span', { class: 'segmented__label', text: label })]);
     }));
 
     const header = h('header', { class: 'page-header' }, [

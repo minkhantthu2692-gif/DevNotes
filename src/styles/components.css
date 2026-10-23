@@ -29,7 +29,7 @@
 }
 .btn:hover { background: var(--color-surface-2); border-color: var(--color-border-strong); }
 .btn:active { background: var(--color-surface-3); }
-.btn svg { width: 1rem; height: 1rem; flex: none; }
+.btn .icon { width: 1rem; height: 1rem; }
 
 .btn--primary {
   background: var(--color-accent);
@@ -67,6 +67,16 @@
 
 /* --- Form controls -------------------------------------------------------- */
 .field { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; }
+/* Base size for every app icon. icon() emits <span class="icon"><svg …
+   width="100%" height="100%"></span>; without a size on the span the
+   percentage cannot resolve and the SVG renders at the browser default
+   (300×150). This is the safety net — wrappers size their own variant below. */
+.icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none; /* never stretch in flex containers */
+}
+
 .field__label {
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
@@ -134,6 +144,7 @@
   color: var(--color-text-faint);
   pointer-events: none;
 }
+.search-field__icon .icon { width: 100%; height: 100%; }
 .search-field__clear {
   position: absolute;
   right: var(--sp-1);
@@ -194,12 +205,21 @@
   border: 0.0625rem solid var(--color-border);
   border-radius: var(--radius-md);
 }
-.segmented__option { position: relative; }
-.segmented__option input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
-.segmented__option span {
+.segmented__option {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
+  border-radius: var(--radius-sm);
+}
+.segmented__option input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+/* The chip styles target the label span specifically: an optional leading
+   icon must not inherit the chip padding/background, and the checked state
+   must highlight the label — with a bare `span` selector both used to land
+   on the icon instead (it sits between the input and the label). */
+.segmented__label {
+  display: inline-flex;
+  align-items: center;
   padding: var(--sp-1) var(--sp-3);
   min-height: calc(var(--control-h) - 0.5rem);
   border-radius: var(--radius-sm);
@@ -209,12 +229,14 @@
   cursor: pointer;
   transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
-.segmented__option input:checked + span {
+.segmented__option input:checked ~ .segmented__label {
   background: var(--color-surface);
   color: var(--color-text);
   box-shadow: var(--shadow-1);
 }
-.segmented__option input:focus-visible + span { box-shadow: var(--focus-ring); }
+/* Keyboard-only ring around the whole option (icon included), like the
+   previous `input:focus-visible + span` did for icon-less controls. */
+.segmented__option:has(input:focus-visible) { box-shadow: var(--focus-ring); }
 
 /* Range slider */
 .range { width: 100%; accent-color: var(--color-accent); cursor: pointer; }
@@ -663,6 +685,7 @@
   background: var(--color-surface-2);
   color: var(--color-text-faint);
 }
+.empty-state__icon .icon { width: 1.5rem; height: 1.5rem; }
 .empty-state__title { font-size: var(--fs-lg); font-weight: var(--fw-semibold); color: var(--color-text); }
 .empty-state__text { max-width: 32rem; font-size: var(--fs-md); }
 .empty-state__actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; justify-content: center; margin-top: var(--sp-2); }
@@ -880,6 +903,7 @@
   cursor: pointer;
 }
 .sync-pill:hover { border-color: var(--color-border-strong); color: var(--color-text); }
+.sync-pill .icon { width: 1rem; height: 1rem; }
 .sync-pill[data-state="error"] { background: var(--color-danger-soft); color: var(--color-danger); border-color: transparent; }
 .sync-pill[data-state="synced"] { background: var(--color-success-soft); color: var(--color-success); border-color: transparent; }
 .sync-pill[data-state="syncing"] { background: var(--color-accent-soft); color: var(--color-accent); border-color: transparent; }

@@ -256,6 +256,15 @@ async function main() {
         }
         const newErrors = pageErrors.slice(before);
         assert(newErrors.length === 0, `/${route} raised: ${newErrors.slice(0, 2).join(' | ')}`);
+
+        // Icons must stay sized: an .icon span without a size resolves its
+        // 100% SVG to the browser default (300×150) and covers the layout.
+        const oversized = await page.evaluate(() => [...document.querySelectorAll('.icon')]
+          .filter((el) => {
+            const box = el.getBoundingClientRect();
+            return box.width > 48 || box.height > 48;
+          }).length);
+        assert(oversized === 0, `/${route} rendered ${oversized} icon(s) larger than 48px`);
       }
     });
 

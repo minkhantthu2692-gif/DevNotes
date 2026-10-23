@@ -161,7 +161,7 @@ export default {
               },
             },
           }),
-          h('span', { text: label }),
+          h('span', { class: 'segmented__label', text: label }),
         ]),
       ),
     );

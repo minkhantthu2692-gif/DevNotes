@@ -68,7 +68,7 @@ export default {
           attrs: state.type === value ? { checked: '' } : {},
           on: { change: () => { state.type = value; persist(); } },
         }),
-        h('span', { text: label }),
+        h('span', { class: 'segmented__label', text: label }),
       ])));
 
     const searchInput = h('input', {
