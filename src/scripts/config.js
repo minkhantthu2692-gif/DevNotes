@@ -28,8 +28,8 @@ export const STORAGE_KEYS = {
  * How to obtain them: README → "Supabase setup".
  */
 export const SUPABASE = {
-  url: '',        // e.g. 'https://abcdefghijklmnop.supabase.co'
-  anonKey: '',    // publishable/anon key
+  url: 'https://otbjkarkexqfujotsdcw.supabase.co',
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YmprYXJrZXhxZnVqb3RzZGN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NDczODgsImV4cCI6MjEwODMyMzM4OH0.96MWMjuhWSVizX7z0AN_tJbnF7OY7_5WO5fGv6JM3gM', // publishable/anon key (RLS-guarded; safe to ship)
   enabled() {
     return Boolean(SUPABASE.url && SUPABASE.anonKey);
   },

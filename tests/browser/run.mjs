@@ -252,11 +252,14 @@ async function main() {
       assert(reg && reg.controlled, 'the page is not controlled by an active service worker');
 
       // sw.js SHELL currently lists 16 entries; a short precache means addAll
-      // failed (a missing asset) and offline loads would break.
+      // failed (a missing asset) and offline loads would break. The cache name
+      // is versioned in sw.js (bumped on shell changes), so discover it
+      // instead of hardcoding a version.
       const shellEntries = await page.evaluate(async () => {
         const names = await caches.keys();
-        if (!names.includes('devnotes-shell-v1')) return 0;
-        const cache = await caches.open('devnotes-shell-v1');
+        const shell = names.find((name) => name.startsWith('devnotes-shell-'));
+        if (!shell) return 0;
+        const cache = await caches.open(shell);
         return (await cache.keys()).length;
       });
       assert(shellEntries >= 16, `shell precache incomplete: ${shellEntries}/16 entries`);

@@ -16,7 +16,7 @@
  * sync with index.html when adding root-level assets.
  */
 
-const CACHE = 'devnotes-shell-v1';
+const CACHE = 'devnotes-shell-v2';
 
 const SHELL = [
   './',
