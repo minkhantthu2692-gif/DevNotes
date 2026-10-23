@@ -10,6 +10,11 @@
  *   → settings page renders.
  *
  * Run: npm run test:browser   (exit code 1 on any failure)
+ *
+ * Set SMOKE_ORIGIN (e.g. https://user.github.io/DevNotes) to run the same
+ * steps against an already-deployed copy instead of a local server. A remote
+ * run writes into that deployment's own origin storage, so use it only for
+ * deployments you control.
  */
 
 import http from 'node:http';
@@ -21,7 +26,8 @@ import { chromium } from 'playwright-core';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const PORT = Number(process.env.SMOKE_PORT || 4187);
-const ORIGIN = `http://127.0.0.1:${PORT}`;
+const REMOTE = (process.env.SMOKE_ORIGIN || '').replace(/\/+$/, '');
+const ORIGIN = REMOTE || `http://127.0.0.1:${PORT}`;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -109,9 +115,9 @@ async function main() {
     return;
   }
   console.log(`Browser: ${executablePath}`);
-  console.log(`Serving: ${ROOT} at ${ORIGIN}\n`);
+  console.log(REMOTE ? `Target: ${ORIGIN} (remote)\n` : `Serving: ${ROOT} at ${ORIGIN}\n`);
 
-  await new Promise((resolve) => server.listen(PORT, '127.0.0.1', resolve));
+  if (!REMOTE) await new Promise((resolve) => server.listen(PORT, '127.0.0.1', resolve));
 
   const browser = await chromium.launch({ executablePath, headless: true });
   const context = await browser.newContext();
@@ -241,7 +247,7 @@ async function main() {
     });
   } finally {
     await browser.close().catch(() => {});
-    await new Promise((resolve) => server.close(resolve));
+    if (server.listening) await new Promise((resolve) => server.close(resolve));
   }
 
   const failed = results.filter((r) => !r.ok);
