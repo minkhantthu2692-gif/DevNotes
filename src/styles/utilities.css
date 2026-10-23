@@ -50,3 +50,35 @@
   gap: var(--sp-3);
   grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr));
 }
+
+/* --- Scrollbars (global) ---------------------------------------------------
+   Replaces the OS default — including Windows' arrow-button scrollbar — with
+   a slim thumb that follows the active theme. The thumb uses the theme's
+   faint text color (dark on light, light on dark — no per-theme rules),
+   brightens on hover and turns accent while dragging; the track and corner
+   stay transparent so nothing flashes white in dark mode.
+   Chromium renders the -webkit rules below (exact size, radius, inset);
+   Firefox reads scrollbar-color/width, which inherit from :root. */
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-text-faint) 55%, transparent) transparent;
+}
+*::-webkit-scrollbar { width: var(--scrollbar-size); height: var(--scrollbar-size); }
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--color-text-faint) 45%, transparent);
+  /* Transparent border insets the thumb inside its track (background-clip
+     must come after the background shorthand, which resets it). */
+  border: 0.1875rem solid transparent;
+  border-radius: var(--radius-full);
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-text-faint) 75%, transparent);
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:active {
+  background: var(--color-accent);
+  background-clip: padding-box;
+}

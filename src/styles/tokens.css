@@ -58,6 +58,7 @@
   --content-max: 80rem;
   --panel-max: 50rem;
   --editor-max: 74ch;
+  --scrollbar-size: 0.75rem;
   --control-h: 2.25rem;
   --control-h-sm: 1.75rem;
   --control-h-lg: 2.625rem;

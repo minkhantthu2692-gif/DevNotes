@@ -23,7 +23,7 @@
  * sync with index.html when adding root-level assets.
  */
 
-const CACHE = 'devnotes-shell-v5';
+const CACHE = 'devnotes-shell-v6';
 
 const SHELL = [
   './',

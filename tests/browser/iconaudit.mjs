@@ -64,9 +64,13 @@ async function main() {
   console.log(`Target: ${ORIGIN}\n`);
 
   if (!REMOTE) await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
+  const [vw, vh] = (process.env.AUDIT_VIEWPORT || '1280x720').split('x').map(Number);
   const browser = await chromium.launch({ executablePath, headless: true });
-  const context = await browser.newContext();
+  const context = await browser.newContext({ viewport: { width: vw, height: vh } });
   const page = await context.newPage();
+  // AUDIT_THEME only works with the default 'system' theme (a fresh profile
+  // has no IndexedDB prefs, so the app resolves theme via prefers-color-scheme).
+  if (process.env.AUDIT_THEME) await page.emulateMedia({ colorScheme: process.env.AUDIT_THEME });
 
   try {
     for (const route of ['dashboard', 'settings', 'library', 'assistant', 'account']) {
@@ -76,6 +80,20 @@ async function main() {
 
       const shot = path.join(ROOT, 'tests', 'artifacts', `iconaudit-${route}.png`);
       await page.screenshot({ path: shot }).catch(() => {});
+
+      if (route === 'settings') {
+        const sb = await page.evaluate(() => {
+          const read = (el) => (el ? {
+            scrollbarColor: getComputedStyle(el).scrollbarColor,
+            webkitWidth: getComputedStyle(el, '::-webkit-scrollbar').width,
+            thumbBg: getComputedStyle(el, '::-webkit-scrollbar-thumb').backgroundColor,
+            thumbRadius: getComputedStyle(el, '::-webkit-scrollbar-thumb').borderRadius,
+            overflowing: el.scrollHeight > el.clientHeight,
+          } : null);
+          return { html: read(document.documentElement), sidebar: read(document.querySelector('.sidebar__inner')) };
+        });
+        console.log(`--- scrollbar probe: ${JSON.stringify(sb)}`);
+      }
 
       const rows = await page.evaluate(() => {
         const out = [];
