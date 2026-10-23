@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-density="comfortable">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="description" content="DevNotes — a personal, offline-first programming knowledge workspace." />
+  <title>DevNotes</title>
+
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./src/assets/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./src/assets/icons/icon-192.png" />
+
+  <!-- Design system: order matters. Tokens first, then theme overrides, then layers. -->
+  <link rel="stylesheet" href="./src/styles/tokens.css" />
+  <link rel="stylesheet" href="./src/styles/themes.css" />
+  <link rel="stylesheet" href="./src/fonts/fonts.css" />
+  <link rel="stylesheet" href="./src/styles/typography.css" />
+  <link rel="stylesheet" href="./src/styles/hljs.css" />
+  <link rel="stylesheet" href="./src/styles/markdown.css" />
+  <link rel="stylesheet" href="./src/styles/layout.css" />
+  <link rel="stylesheet" href="./src/styles/components.css" />
+  <link rel="stylesheet" href="./src/styles/pages.css" />
+  <link rel="stylesheet" href="./src/styles/utilities.css" />
+
+  <script>
+    // Apply persisted appearance preferences before first paint to avoid a theme flash.
+    // The full preference schema lives in src/scripts/features/settings/prefs.js;
+    // this bootstrap only reads the subset needed for first paint.
+    (function () {
+      try {
+        var raw = localStorage.getItem('devnotes.ui');
+        var p = raw ? JSON.parse(raw) : {};
+        var root = document.documentElement;
+
+        var theme = p.theme || 'system';
+        var resolved = theme === 'system'
+          ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : theme;
+        root.setAttribute('data-theme', resolved);
+
+        if (p.density) root.setAttribute('data-density', p.density);
+        if (p.motion) root.setAttribute('data-motion', p.motion);
+        if (p.glass) root.setAttribute('data-glass', p.glass);
+        if (p.accent) root.style.setProperty('--accent-user', p.accent);
+        if (p.fontSize) root.style.fontSize = p.fontSize;
+        if (p.lineHeight) root.style.setProperty('--leading-user', String(p.lineHeight));
+        if (p.letterSpacing) root.style.setProperty('--tracking-user', p.letterSpacing + 'em');
+        if (p.uiFont) root.style.setProperty('--font-ui', p.uiFont);
+        if (p.codeFont) root.style.setProperty('--font-code', p.codeFont);
+        if (p.codeFontSize) root.style.setProperty('--font-size-code', p.codeFontSize);
+        if (p.editorWidth) root.style.setProperty('--editor-max', p.editorWidth + 'ch');
+      } catch (e) { /* Storage may be unavailable (private mode); defaults apply. */ }
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <noscript>
+    <div class="noscript-notice">
+      <h1>JavaScript is required</h1>
+      <p>DevNotes is a local-first application that stores your library in your browser. Please enable JavaScript and reload.</p>
+    </div>
+  </noscript>
+
+  <div id="app-shell" class="app-shell" hidden>
+    <aside id="sidebar" class="sidebar" aria-label="Primary navigation">
+      <!-- Navigation is rendered by src/scripts/components/sidebar.js from a single config. -->
+      <div class="sidebar__inner" id="sidebar-inner"></div>
+    </aside>
+    <div id="sidebar-scrim" class="sidebar-scrim" hidden></div>
+
+    <div class="app-body">
+      <header class="topbar" id="topbar">
+        <!-- Rendered by src/scripts/components/topbar.js -->
+      </header>
+
+      <main id="main-content" class="content" tabindex="-1">
+        <div id="page-outlet" class="page-outlet"></div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Overlay roots. Kept outside the shell so dialogs/menus survive page swaps. -->
+  <div id="toast-root" class="toast-root" role="region" aria-label="Notifications"></div>
+  <div id="dialog-root"></div>
+  <div id="menu-root"></div>
+  <div id="tooltip-root"></div>
+  <div id="palette-root"></div>
+
+  <div id="boot-status" class="boot-status" role="status" aria-live="polite">
+    <span class="spinner" aria-hidden="true"></span>
+    <span>Loading DevNotes…</span>
+  </div>
+
+  <script type="module" src="./src/scripts/app.js"></script>
+</body>
+</html>

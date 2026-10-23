@@ -1,0 +1,100 @@
+/* =============================================================================
+   themes.css — light / dark theme values.
+   data-theme is resolved from the user preference ("system" follows
+   prefers-color-scheme). All values here feed the tokens in tokens.css.
+   ========================================================================== */
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bg: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-surface-2: #f2f3f6;
+  --color-surface-3: #e9ebf0;
+  --color-border: #e2e4ea;
+  --color-border-strong: #c9cdd6;
+  --color-text: #1b1f2a;
+  --color-text-muted: #565c6e;
+  --color-text-faint: #838a9d;
+  --color-overlay: rgba(16, 19, 27, 0.45);
+  --color-code-bg: #f4f5f8;
+
+  --shadow-1: 0 0.0625rem 0.125rem rgba(18, 22, 33, 0.06),
+              0 0.0625rem 0.1875rem rgba(18, 22, 33, 0.04);
+  --shadow-2: 0 0.25rem 0.75rem -0.25rem rgba(18, 22, 33, 0.16),
+              0 0.125rem 0.25rem rgba(18, 22, 33, 0.06);
+  --shadow-3: 0 1rem 2.5rem -0.75rem rgba(18, 22, 33, 0.28),
+              0 0.375rem 1rem -0.5rem rgba(18, 22, 33, 0.14);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg: #0f1117;
+  --color-surface: #161923;
+  --color-surface-2: #1c202c;
+  --color-surface-3: #242937;
+  --color-border: #262b3a;
+  --color-border-strong: #3a4157;
+  --color-text: #e7e9f0;
+  --color-text-muted: #a3aabd;
+  --color-text-faint: #737b92;
+  --color-overlay: rgba(4, 6, 12, 0.62);
+  --color-code-bg: #12151d;
+
+  /* Slightly lightened accents read better on dark surfaces. */
+  --color-accent-fg: #ffffff;
+
+  --color-success: #4cc38a;
+  --color-warning: #e0a63b;
+  --color-danger: #f2776b;
+  --color-info: #6aa8f7;
+  --color-success-soft: color-mix(in oklab, var(--color-success) 16%, transparent);
+  --color-warning-soft: color-mix(in oklab, var(--color-warning) 16%, transparent);
+  --color-danger-soft: color-mix(in oklab, var(--color-danger) 16%, transparent);
+  --color-info-soft: color-mix(in oklab, var(--color-info) 16%, transparent);
+
+  --shadow-1: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 0.25rem 0.75rem -0.25rem rgba(0, 0, 0, 0.55),
+              0 0.125rem 0.25rem rgba(0, 0, 0, 0.35);
+  --shadow-3: 0 1rem 2.5rem -0.75rem rgba(0, 0, 0, 0.7),
+              0 0.375rem 1rem -0.5rem rgba(0, 0, 0, 0.45);
+}
+
+/* Opt-in glass surfaces (settings → appearance). Solid backgrounds remain
+   the default so readability never depends on backdrop-filter support. */
+:root[data-glass="on"] .topbar,
+:root[data-glass="on"] .sidebar {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+:root[data-glass="on"] .dialog,
+:root[data-glass="on"] .palette {
+  background: color-mix(in oklab, var(--color-surface) 88%, transparent);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+/* Kill animations/transitions when the user or OS asks for reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}

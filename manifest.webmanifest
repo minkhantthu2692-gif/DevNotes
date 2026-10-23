@@ -1,0 +1,16 @@
+{
+  "name": "DevNotes — Programming Knowledge Workspace",
+  "short_name": "DevNotes",
+  "description": "A personal, offline-first programming knowledge library.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#5b6cff",
+  "icons": [
+    { "src": "src/assets/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "src/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "src/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "src/assets/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

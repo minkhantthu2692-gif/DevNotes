@@ -1,0 +1,104 @@
+/* =============================================================================
+   hljs.css — syntax highlighting theme mapped to DevNotes design tokens so
+   highlighting follows the active theme and accent automatically.
+   Source classes: Highlight.js 11 (https://highlightjs.org).
+   ========================================================================== */
+
+.hljs {
+  color: var(--color-text);
+  background: transparent;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--color-text-faint);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-doctag,
+.hljs-formula {
+  color: var(--color-accent);
+}
+
+.hljs-name,
+.hljs-section,
+.hljs-selector-class,
+.hljs-selector-id,
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.class_.inherited__ {
+  color: var(--color-hljs-title, #2f6f44);
+  font-weight: var(--fw-medium);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-attribute,
+.hljs-meta .hljs-string,
+.hljs-symbol {
+  color: var(--color-hljs-string, #1c64c9);
+}
+
+.hljs-number,
+.hljs-bullet,
+.hljs-link,
+.hljs-meta,
+.hljs-selector-attr,
+.hljs-selector-pseudo,
+.hljs-template-variable,
+.hljs-variable {
+  color: var(--color-hljs-number, #9a4b00);
+}
+
+.hljs-built_in,
+.hljs-type,
+.hljs-title.function_,
+.hljs-params {
+  color: var(--color-hljs-fn, #7a3ea1);
+}
+
+.hljs-attr,
+.hljs-property,
+.hljs-subst {
+  color: var(--color-text);
+}
+
+.hljs-deletion,
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong,
+.hljs-emphasis strong {
+  font-weight: var(--fw-semibold);
+}
+
+.hljs-tag {
+  color: var(--color-text-muted);
+  background: transparent;
+}
+
+.hljs-label,
+.hljs-meta {
+  color: var(--color-hljs-number, #9a4b00);
+}
+
+/* Theme-specific refinements — tuned for contrast in each mode. */
+:root[data-theme="light"] {
+  --color-hljs-title: #1f6b45;
+  --color-hljs-string: #1a5fb4;
+  --color-hljs-number: #93480a;
+  --color-hljs-fn: #7138a8;
+}
+
+:root[data-theme="dark"] {
+  --color-hljs-title: #7ad0a1;
+  --color-hljs-string: #82b2f8;
+  --color-hljs-number: #e6a756;
+  --color-hljs-fg: #d5a7f5;
+  --color-hljs-fn: #d5a7f5;
+}

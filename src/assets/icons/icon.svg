@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="DevNotes">
+  <rect width="512" height="512" rx="96" fill="#5b6cff"/>
+  <g fill="none" stroke="#ffffff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Book spine -->
+    <path d="M150 130h90c28 0 50 22 50 50v190c0-24-20-44-44-44H150z"/>
+    <path d="M362 130h-30v246h64c-6-24-26-44-50-44h-4"/>
+    <!-- Code chevrons on the cover -->
+    <path d="M196 208l-30 34 30 34" stroke-width="26"/>
+    <path d="M244 208l30 34-30 34" stroke-width="26"/>
+  </g>
+</svg>

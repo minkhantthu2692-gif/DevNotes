@@ -1,0 +1,237 @@
+/* =============================================================================
+   markdown.css — styles for rendered Markdown: lesson previews, exports,
+   and AI responses. Raw HTML is never rendered unsanitized; this sheet only
+   covers elements the renderer produces.
+   ========================================================================== */
+
+.md {
+  font-size: var(--fs-base);
+  line-height: var(--leading-user);
+  color: var(--color-text);
+  overflow-wrap: break-word;
+  word-break: break-word; /* long tokens must never cause page overflow */
+}
+
+.md > * + * { margin-top: var(--sp-4); }
+
+.md h1, .md h2, .md h3, .md h4, .md h5, .md h6 {
+  margin-top: var(--sp-7);
+  scroll-margin-top: calc(var(--topbar-h) + var(--sp-3));
+}
+
+.md > h1:first-child,
+.md > h2:first-child,
+.md > h3:first-child { margin-top: 0; }
+
+.md h1 { font-size: var(--fs-2xl); padding-bottom: var(--sp-2); border-bottom: 0.0625rem solid var(--color-border); }
+.md h2 { font-size: var(--fs-xl); padding-bottom: var(--sp-2); border-bottom: 0.0625rem solid var(--color-border); }
+.md h3 { font-size: var(--fs-lg); }
+.md h4 { font-size: var(--fs-base); }
+
+.md .heading-anchor {
+  margin-left: var(--sp-2);
+  color: var(--color-text-faint);
+  text-decoration: none;
+  opacity: 0;
+  font-weight: var(--fw-regular);
+  transition: opacity var(--dur-fast) var(--ease);
+}
+.md h1:hover .heading-anchor,
+.md h2:hover .heading-anchor,
+.md h3:hover .heading-anchor,
+.md h4:hover .heading-anchor,
+.md .heading-anchor:focus-visible { opacity: 1; }
+
+.md p { line-height: var(--leading-user); }
+
+.md ul, .md ol { padding-left: var(--sp-6); }
+.md li + li { margin-top: var(--sp-2); }
+.md li > ul, .md li > ol { margin-top: var(--sp-2); }
+
+.md li.task-item {
+  list-style: none;
+  margin-left: calc(-1 * var(--sp-5));
+}
+.md li.task-item input[type="checkbox"] {
+  margin-right: var(--sp-2);
+  accent-color: var(--color-accent);
+}
+
+.md blockquote {
+  margin: var(--sp-4) 0;
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 0.1875rem solid var(--color-accent-border);
+  background: var(--color-surface-2);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--color-text-muted);
+}
+.md blockquote > * + * { margin-top: var(--sp-3); }
+
+.md hr {
+  border: 0;
+  border-top: 0.0625rem solid var(--color-border);
+  margin: var(--sp-7) 0;
+}
+
+.md a { color: var(--color-accent); }
+.md a[href^="http"]::after {
+  content: "\2197"; /* external-link hint; links open in a new tab */
+  font-size: 0.75em;
+  margin-left: 0.15em;
+  opacity: 0.7;
+}
+
+/* Inline code */
+.md :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-xs);
+  background: var(--color-code-bg);
+  border: 0.0625rem solid var(--color-border);
+  font-size: 0.875em;
+  word-break: break-word;
+}
+
+/* Tables */
+.md table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-md);
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.md th, .md td {
+  padding: var(--sp-2) var(--sp-3);
+  border: 0.0625rem solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+.md th {
+  background: var(--color-surface-2);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+.md tr:nth-child(even) td { background: color-mix(in oklab, var(--color-surface-2) 55%, transparent); }
+
+.md img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+
+/* --- Code block component -------------------------------------------------
+   Produced by src/scripts/utils/markdown.js (renderer) and wired up by
+   src/scripts/features/editor/code-block.js (copy / wrap / line numbers). */
+.code-block {
+  margin: var(--sp-4) 0;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-code-bg);
+  overflow: hidden;
+}
+
+.code-block__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2) var(--sp-1) var(--sp-3);
+  background: var(--color-surface-2);
+  border-bottom: 0.0625rem solid var(--color-border);
+  font-family: var(--font-ui);
+  font-size: var(--fs-xs);
+}
+
+.code-block__lang {
+  color: var(--color-text-muted);
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+  font-weight: var(--fw-medium);
+}
+.code-block__lang[data-unknown="true"] { color: var(--color-warning); }
+
+.code-block__actions {
+  display: flex;
+  gap: var(--sp-1);
+  flex-wrap: wrap;
+}
+
+.code-block__btn {
+  appearance: none;
+  border: 0.0625rem solid transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  line-height: 1;
+  padding: 0.3rem var(--sp-2);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.code-block__btn:hover {
+  background: var(--color-surface-3);
+  color: var(--color-text);
+}
+.code-block__btn[aria-pressed="true"] {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  border-color: var(--color-accent-border);
+}
+
+.code-block__pre {
+  margin: 0;
+  padding: var(--sp-3);
+  overflow-x: auto;
+  overflow-y: hidden;
+  font-family: var(--font-code);
+  font-size: var(--font-size-code);
+  line-height: 1.6;
+  tab-size: var(--tab-size, 2);
+  color: var(--color-text);
+}
+.code-block__pre[data-wrap="true"] {
+  overflow-x: visible;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.code-block__pre code { display: block; white-space: inherit; }
+.code-block__pre[data-wrap="false"] code { white-space: pre; }
+
+/* Line numbers (opt-in, generated on request). */
+.code-block__pre[data-lines="true"] { padding-left: 0; }
+.line-numbers { display: table; width: 100%; }
+.line-numbers__row { display: table-row; }
+.line-numbers__num {
+  display: table-cell;
+  width: 1%;
+  padding: 0 var(--sp-3) 0 var(--sp-3);
+  text-align: right;
+  color: var(--color-text-faint);
+  user-select: none;
+  border-right: 0.0625rem solid var(--color-border);
+  background: color-mix(in oklab, var(--color-surface-2) 60%, transparent);
+  position: sticky;
+  left: 0;
+}
+.line-numbers__code {
+  display: table-cell;
+  padding: 0 var(--sp-3);
+  white-space: inherit;
+}
+
+/* Math (KaTeX) — lazy loaded only when math is present. */
+.md .math-block {
+  margin: var(--sp-4) 0;
+  padding: var(--sp-3);
+  overflow-x: auto;
+  text-align: center;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-sm);
+}
+.md .math-error {
+  font-family: var(--font-code);
+  font-size: var(--fs-md);
+  color: var(--color-danger);
+}

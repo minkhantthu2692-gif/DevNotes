@@ -1,0 +1,52 @@
+/* =============================================================================
+   utilities.css — small, genuinely reusable helpers.
+   No utility here should duplicate a component class or a design token.
+   ========================================================================== */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hidden, [hidden] { display: none !important; }
+
+.no-select { user-select: none; }
+
+.overflow-x-auto {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.full-width { width: 100%; }
+.nowrap { white-space: nowrap; }
+.break-anywhere { overflow-wrap: anywhere; word-break: break-word; }
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-1 { gap: var(--sp-1); }
+.gap-2 { gap: var(--sp-2); }
+.gap-3 { gap: var(--sp-3); }
+.gap-4 { gap: var(--sp-4); }
+
+.mt-0 { margin-top: 0; }
+.mt-2 { margin-top: var(--sp-2); }
+.mt-4 { margin-top: var(--sp-4); }
+.mb-2 { margin-bottom: var(--sp-2); }
+.mb-4 { margin-bottom: var(--sp-4); }
+
+.grid-list {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr));
+}

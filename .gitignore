@@ -1,0 +1,23 @@
+# Dependencies are development-only (tests, icon generation). The application
+# itself needs no build step and no node_modules at runtime.
+node_modules/
+
+# Local Supabase configuration must never be committed.
+.env
+.env.local
+.env.*.local
+
+# User data / backups
+*.devnotes-backup.json
+tests/artifacts/
+
+# Editor and OS noise
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*

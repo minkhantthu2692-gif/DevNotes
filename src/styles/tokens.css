@@ -1,0 +1,164 @@
+/* =============================================================================
+   tokens.css — single source of truth for shared design values.
+   Every component must reference these variables instead of raw values.
+   Spacing, sizing and typography are rem-based; px is reserved for hairlines.
+   ========================================================================== */
+
+:root {
+  /* --- Typography scale (rem, relative to user-configurable root size) --- */
+  --fs-2xs: 0.6875rem;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.875rem;   /* dense body / controls */
+  --fs-base: 1rem;     /* default reading size */
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.25rem;
+  --fs-2xl: 1.5rem;
+  --fs-3xl: 1.875rem;
+  --fs-4xl: 2.25rem;
+
+  /* Font families — overridden by user preferences (settings → typography). */
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    "Noto Sans", "Noto Sans Myanmar", sans-serif;
+  --font-code: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", "JetBrains Mono", monospace;
+  --font-size-code: 0.875rem;
+  --leading-user: 1.6;
+  --tracking-user: 0;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* --- Spacing scale (rem) --- */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-7: 2rem;
+  --sp-8: 2.5rem;
+  --sp-9: 3rem;
+  --sp-10: 4rem;
+
+  /* --- Radii --- */
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 999px;
+
+  /* --- Layout dimensions --- */
+  --sidebar-w: 15.5rem;
+  --sidebar-w-compact: 4.25rem;
+  --topbar-h: 3.5rem;
+  --content-max: 80rem;
+  --panel-max: 50rem;
+  --editor-max: 74ch;
+  --control-h: 2.25rem;
+  --control-h-sm: 1.75rem;
+  --control-h-lg: 2.625rem;
+  --row-pad-y: var(--sp-3);
+  --gap-section: var(--sp-7);
+  --z-base: 1;
+  --z-sticky: 10;
+  --z-sidebar: 30;
+  --z-topbar: 20;
+  --z-dropdown: 60;
+  --z-scrim: 40;
+  --z-dialog: 80;
+  --z-palette: 90;
+  --z-toast: 100;
+  --z-tooltip: 110;
+
+  /* --- Motion --- */
+  --dur-fast: 120ms;
+  --dur-med: 200ms;
+  --dur-slow: 320ms;
+  --ease: cubic-bezier(0.2, 0, 0.13, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  /* --- Accent (user configurable) ---------------------------------------
+     --accent-user is set by preferences; derived shades use color-mix()
+     so a single custom color produces a complete, contrast-safe palette. */
+  --accent-user: #5b6cff;
+
+  /* --- Semantic light-theme values (overridden in themes.css) --- */
+  --color-bg: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-surface-2: #f2f3f6;
+  --color-surface-3: #e9ebf0;
+  --color-border: #e2e4ea;
+  --color-border-strong: #c9cdd6;
+  --color-text: #1b1f2a;
+  --color-text-muted: #5a6072;
+  --color-text-faint: #868c9e;
+  --color-overlay: rgba(16, 19, 27, 0.45);
+  --color-code-bg: #f4f5f8;
+
+  /* Accent family — derived from --accent-user (fallback: solid indigo). */
+  --color-accent: var(--accent-user);
+  --color-accent-hover: color-mix(in oklab, var(--accent-user) 88%, #000);
+  --color-accent-active: color-mix(in oklab, var(--accent-user) 78%, #000);
+  --color-accent-fg: #ffffff;
+  --color-accent-soft: color-mix(in oklab, var(--accent-user) 12%, transparent);
+  --color-accent-soft-hover: color-mix(in oklab, var(--accent-user) 20%, transparent);
+  --color-accent-border: color-mix(in oklab, var(--accent-user) 40%, var(--color-border));
+
+  /* Status colors */
+  --color-success: #1a7f4b;
+  --color-success-soft: color-mix(in oklab, var(--color-success) 12%, transparent);
+  --color-warning: #a16207;
+  --color-warning-soft: color-mix(in oklab, var(--color-warning) 14%, transparent);
+  --color-danger: #c0362c;
+  --color-danger-soft: color-mix(in oklab, var(--color-danger) 12%, transparent);
+  --color-danger-hover: color-mix(in oklab, var(--color-danger) 85%, #000);
+  --color-info: #1c64c9;
+  --color-info-soft: color-mix(in oklab, var(--color-info) 12%, transparent);
+
+  /* Selection & focus */
+  --color-selection: color-mix(in oklab, var(--accent-user) 25%, transparent);
+  --focus-ring: 0 0 0 0.125rem color-mix(in oklab, var(--accent-user) 55%, transparent);
+  --focus-ring-offset: 0.125rem;
+
+  /* Shadows — subtle, theme-aware (dark theme deepens them). */
+  --shadow-1: 0 0.0625rem 0.125rem rgba(18, 22, 33, 0.06),
+              0 0.0625rem 0.1875rem rgba(18, 22, 33, 0.04);
+  --shadow-2: 0 0.25rem 0.75rem -0.25rem rgba(18, 22, 33, 0.16),
+              0 0.125rem 0.25rem rgba(18, 22, 33, 0.06);
+  --shadow-3: 0 1rem 2.5rem -0.75rem rgba(18, 22, 33, 0.28),
+              0 0.375rem 1rem -0.5rem rgba(18, 22, 33, 0.14);
+
+  /* Glass / blur (opt-in via settings; solid fallback always present). */
+  --glass-bg: color-mix(in oklab, var(--color-surface) 78%, transparent);
+  --glass-blur: 0.75rem;
+
+  /* Density: comfortable (default) vs compact. */
+  --density-scale: 1;
+}
+
+:root[data-density="compact"] {
+  --control-h: 2rem;
+  --control-h-sm: 1.625rem;
+  --control-h-lg: 2.25rem;
+  --row-pad-y: var(--sp-2);
+  --gap-section: var(--sp-6);
+}
+
+/* Reduced motion: explicit user preference or OS setting. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-med: 0ms;
+    --dur-slow: 0ms;
+  }
+}
+
+:root[data-motion="reduced"] {
+  --dur-fast: 0ms;
+  --dur-med: 0ms;
+  --dur-slow: 0ms;
+}

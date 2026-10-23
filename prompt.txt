@@ -1,0 +1,1081 @@
+PROJECT: DevNotes — Personal Programming Knowledge Workspace
+
+1. ROLE AND OBJECTIVE
+
+Act as a senior frontend engineer, UI/UX designer, database architect, and application security engineer.
+
+Build a complete, production-minded web application called DevNotes: a personal programming knowledge library for learners who want to organize, preserve, review, and apply their programming knowledge.
+
+This is not merely a dashboard mockup or a CRUD demonstration. Build a genuinely usable application with working features, persistent data, offline support, cloud synchronization, authentication, a customizable editor, and an AI learning assistant.
+
+The owner is learning programming through self-study and wants to maintain this project independently. Code readability, understandable comments, straightforward setup, maintainability, and minimal operational complexity are critical requirements.
+
+Make sensible engineering decisions independently when they improve usability, reliability, security, or maintainability. Do not blindly follow requirements if a technically superior solution achieves the same goal with fewer complications.
+
+2. NON-NEGOTIABLE TECHNOLOGY REQUIREMENTS
+
+Core frontend
+
+- HTML5
+- CSS3
+- Vanilla JavaScript using native ES modules where supported
+- No React, Vue, Angular, Svelte, or other frontend framework.
+- No TypeScript compilation requirement.
+- No Python runtime.
+- No Node.js application server.
+- No mandatory local development server.
+- No mandatory bundler or build step for the normal application.
+- No server-side application that must be running continuously on the user's PC.
+
+Use JavaScript libraries when they provide meaningful functionality that would otherwise be unnecessarily difficult to implement safely.
+
+The application must be deployable as a static website. Prefer native browser APIs and modular JavaScript.
+
+Use a pinned, compatible version of each third-party library. Do not load dependencies dynamically from untrusted sources at runtime.
+
+The main application should work from static hosting over HTTPS. Support opening the application locally where browser capabilities permit, but do not falsely promise that every cloud, authentication, module, or service-worker feature will work from file://.
+
+Backend services
+
+Use Supabase for:
+
+- Authentication
+- PostgreSQL database
+- File storage
+- Realtime updates when useful
+
+Use Groq API for AI features.
+
+Use IndexedDB for local application data and offline-first operations.
+
+Do not use Firebase.
+
+Do not introduce another cloud database, object storage provider, or mandatory backend service unless a documented technical limitation makes it necessary.
+
+Optional server-side component
+
+If a server-side function is necessary to protect shared AI credentials, use a Supabase Edge Function as an optional, deployable JavaScript/TypeScript component.
+
+This function must not require a permanently running local server. Deployment and configuration instructions must be documented.
+
+The static application must still support a personal BYOK AI mode where the user supplies their own Groq API key.
+
+Never expose a privileged API key or service-role key in frontend code.
+
+3. PROJECT PRINCIPLES
+
+Prioritize these principles in order:
+
+1. Data integrity and recoverability.
+2. Security and privacy.
+3. Reliable offline operation and synchronization.
+4. Excellent everyday usability.
+5. Clear, maintainable architecture.
+6. Responsive and accessible design.
+7. Minimal setup and deployment complexity.
+8. Performance and visual polish.
+
+Do not sacrifice correctness for visual effects or excessive abstractions.
+
+Do not create decorative buttons, simulated functionality, fake progress, or placeholder actions that appear implemented.
+
+Every visible control must work, or be explicitly marked as unavailable until configured.
+
+Never silently discard user data.
+
+4. INFORMATION ARCHITECTURE
+
+Implement the following primary destinations:
+
+1. Dashboard
+2. Programming Library
+3. Languages
+4. Categories and Topics
+5. Lesson Editor
+6. Code Snippet Library
+7. Favorites
+8. Review and Flashcards
+9. AI Assistant
+10. Activity and Revision History
+11. Trash
+12. Settings
+13. Account and Synchronization
+
+Use a persistent desktop sidebar, a top navigation/header area, contextual actions, and a responsive navigation pattern for smaller screens.
+
+Provide breadcrumbs where they improve navigation.
+
+Include a command palette for common actions, keyboard navigation, and a global search entry point.
+
+Remember the last relevant navigation state where appropriate.
+
+5. DASHBOARD
+
+Display useful, real information:
+
+- Total lessons
+- Programming languages
+- Categories and topics
+- Saved code snippets
+- Recently edited lessons
+- Recently opened lessons
+- Favorites
+- Learning progress
+- Review items due
+- Pending synchronization changes
+- Last successful synchronization
+- Quick-create actions
+
+Provide empty states with helpful actions for new users.
+
+Do not fabricate learning statistics.
+
+The dashboard must remain useful offline.
+
+6. PROGRAMMING KNOWLEDGE LIBRARY
+
+Support a flexible hierarchy:
+
+Programming Language
+-> Category or Topic
+-> Course or Collection (optional)
+-> Lesson
+
+Do not force every user to use every hierarchy level.
+
+A language may contain lessons without a course. Categories should be reusable where appropriate, and lessons should support multiple tags.
+
+Provide:
+
+- Create, read, update, and delete operations.
+- Duplicate lesson.
+- Bulk selection and bulk actions.
+- Favorites and pinning.
+- Archive and restore.
+- Trash and recoverable deletion.
+- Manual ordering.
+- Sorting and filtering.
+- Search across lesson titles, descriptions, tags, code, and metadata.
+- Recently opened and recently modified views.
+- Learning statuses: Not Started, Learning, Learned.
+- Optional review scheduling.
+- Import and export.
+
+Support the user's ability to add new programming languages, frameworks, libraries, and general technical topics without changing application code.
+
+7. LESSON EDITOR
+
+Each lesson should support:
+
+Metadata
+
+- Lesson title
+- Slug or stable identifier
+- Programming language
+- Category and optional course
+- Tags
+- Summary
+- Difficulty
+- Learning status
+- Created timestamp
+- Updated timestamp
+- Last opened timestamp
+- Source URLs
+- Optional personal notes
+- Optional review date
+- Revision history
+
+Lesson content
+
+- Rich Markdown-oriented description
+- Headings
+- Paragraphs
+- Ordered and unordered lists
+- Tables
+- Links
+- Inline code
+- Multiple code blocks
+- Blockquotes
+- Mathematical notation where practical
+- Images or attachments when configured
+- Notes and explanations alongside code
+
+Use a lightweight, maintainable editor. Prefer a Markdown editor and preview with useful editing controls over an unnecessarily complex word processor.
+
+Support split-pane editing and preview on desktop, with a usable single-pane mode on mobile.
+
+Provide:
+
+- Autosave with a configurable debounce delay.
+- Visible save state: Saving, Saved Locally, Sync Pending, Synced, or Error.
+- Manual save.
+- Undo/redo where supported.
+- Keyboard shortcuts.
+- Word and character counts.
+- Preview mode.
+- Full-screen editor mode.
+- Copy formatted content.
+- Copy Markdown.
+- Duplicate lesson.
+- Export lesson.
+- Recoverable draft handling.
+
+Do not lose unsaved changes when the user navigates away or encounters a network failure.
+
+8. CODE BLOCKS AND SYNTAX HIGHLIGHTING
+
+Use a maintained syntax-highlighting library such as Highlight.js or Prism.js. Select one primary library unless a documented limitation justifies another.
+
+Support common languages including HTML, CSS, JavaScript, Python, Java, C, C++, C#, PHP, SQL, Bash, JSON, YAML, Dart, Kotlin, Swift, and other languages supported by the selected library.
+
+Requirements:
+
+- Language label.
+- Syntax highlighting.
+- Copy code.
+- Copy with or without line numbers.
+- Line wrapping toggle.
+- Line numbers where appropriate.
+- Optional line highlighting.
+- Code font customization.
+- Code font size customization.
+- Code block overflow handling.
+- Accessible copy feedback.
+- Graceful fallback for unknown languages.
+- Lazy-load optional language definitions when practical.
+- Offline availability of installed dependencies.
+
+Code must remain selectable and copyable.
+
+Treat code as text, never as trusted executable HTML.
+
+Do not execute saved code automatically.
+
+9. SEARCH, SORTING, AND FILTERING
+
+Implement a genuinely useful global search system.
+
+Support:
+
+- Lesson titles
+- Descriptions
+- Code contents
+- Programming languages
+- Categories
+- Tags
+- Source URLs
+- Snippet names
+
+Provide:
+
+- Debounced search input.
+- Search result highlighting where safe.
+- Filters by language, category, tag, difficulty, status, favorites, and archive state.
+- Sort by title, created date, updated date, last opened, and manual order.
+- Ascending and descending order.
+- Recent searches if useful.
+- Clear filters and empty-result states.
+
+Use IndexedDB indexes and efficient query strategies. Avoid loading every record into memory for every keystroke when the dataset grows.
+
+A dedicated full-text search library may be added if justified. Keep search functional offline.
+
+10. CODE SNIPPET LIBRARY
+
+Allow standalone snippets or snippets extracted from lessons.
+
+Each snippet supports:
+
+- Name and description
+- Programming language
+- Code
+- Tags
+- Parent lesson, if applicable
+- Created and updated timestamps
+- Favorite status
+- Copy and export actions
+
+Editing a standalone snippet must not unexpectedly alter its source lesson.
+
+If a snippet is extracted from a lesson, retain its source relationship and define explicit update behavior.
+
+11. REVIEW AND LEARNING FEATURES
+
+Implement practical study tools:
+
+- Flashcards
+- Question-and-answer cards
+- Quick self-tests
+- Review queue
+- Mark as known or needs review
+- Optional spaced-repetition scheduling
+- Lesson completion tracking
+- Learning statistics
+
+Allow users to create cards manually and generate draft cards from existing notes using AI.
+
+AI-generated study materials must be reviewed by the user before permanent saving.
+
+Do not represent a completed lesson as proof that the learner has mastered the subject.
+
+12. DESIGN SYSTEM
+
+Create a modern SaaS interface with a minimal, polished, professional appearance.
+
+The design must be desktop-first and responsive.
+
+Support:
+
+- Light theme
+- Dark theme
+- System theme
+- Configurable accent color
+- A small curated set of preset accent colors
+- Custom accent color selection
+- Configurable UI font family
+- Configurable base font size
+- Configurable line height
+- Configurable letter spacing
+- Configurable code font family
+- Configurable code font size
+- Configurable editor width
+- Configurable interface density
+- Optional reduced animations
+- Optional glass/blur effects
+- Persistent user preferences
+
+Use CSS custom properties as design tokens.
+
+Units and spacing
+
+Use a consistent rem-based spacing and typography scale.
+
+Avoid arbitrary, scattered pixel values for font sizes, padding, margins, gaps, and other spacing.
+
+Use rem-based tokens for:
+
+- Typography
+- Component spacing
+- Layout gaps
+- Border radius
+- Common sizing
+- Navigation dimensions where appropriate
+
+Use percentages, fractions, flexbox, grid, viewport-relative units, and max-width constraints when appropriate.
+
+Allow limited px usage for optical details such as 1px borders or hairline separators where necessary.
+
+Never create separate arbitrary values for every component when a shared token can express the design.
+
+Typography and fonts
+
+Do not hard-code a single font family throughout the codebase.
+
+Create a font management system with:
+
+- Bundled font directory under src/fonts/
+- Font manifest
+- Font registration and loading utilities
+- Font previews in Settings
+- Separate interface and code font selections
+- User-imported fonts
+- Font validation and error handling
+- Fallback font stacks
+- Font reset action
+
+Support locally bundled WOFF2, WOFF, TTF, and OTF files where browser support permits.
+
+Because browser applications cannot write arbitrary files into the developer's src/fonts directory, store user-imported font files in IndexedDB. Allow optional cloud font synchronization using Supabase Storage.
+
+Respect font licensing. Do not bundle unlicensed fonts.
+
+Responsive behavior
+
+Design for desktop first, then adapt to tablet and mobile.
+
+Avoid horizontal page overflow.
+
+On smaller screens:
+
+- Convert the sidebar to a drawer or suitable compact navigation.
+- Make editor panes stack or switch modes.
+- Preserve touch-friendly interactions.
+- Keep essential actions reachable.
+- Adapt dialogs and command palette dimensions.
+
+Custom components
+
+Do not use browser alert(), confirm(), prompt(), or default browser dialogs for normal application workflows.
+
+Build reusable custom components for:
+
+- Dialogs and confirmation modals
+- Toast notifications
+- Tooltips
+- Dropdown menus
+- Context menus
+- Progress indicators
+- Loading skeletons
+- Empty states
+- Error states
+- Tabs
+- Popovers
+- Command palette
+- Navigation
+- Search results
+- Copy feedback
+- Status indicators
+- File import feedback
+
+Use native semantic HTML elements where appropriate, but style them consistently.
+
+Do not sacrifice accessibility for visual appearance.
+
+Support keyboard navigation, focus management, Escape handling, visible focus indicators, reduced motion, appropriate ARIA attributes, and sufficient color contrast.
+
+Use blur and glass effects sparingly, with solid fallbacks and acceptable readability.
+
+13. SETTINGS
+
+Organize Settings into clear sections.
+
+Appearance
+
+- Light, Dark, System
+- Accent color
+- Custom accent color
+- UI density
+- Blur effects
+- Animation preferences
+
+Typography
+
+- Interface font
+- Code font
+- Font size
+- Code font size
+- Line height
+- Letter spacing
+- Imported font management
+
+Editor
+
+- Default editor mode
+- Split-pane preference
+- Editor width
+- Word wrap
+- Line numbers
+- Tab size
+- Autosave delay
+- Default code language
+
+Library
+
+- Default sorting
+- Default filters
+- Default lesson status
+- Archive preferences
+
+Offline and synchronization
+
+- Online/offline status
+- Pending operations
+- Last synchronization
+- Retry synchronization
+- Conflict resolution
+- Storage usage where measurable
+- Cache management
+- Sync preferences
+
+AI
+
+- Enable/disable AI
+- Provider selection
+- Model selection
+- BYOK API key input
+- API key validation
+- AI temperature or other supported generation options
+- Response length
+- Preferred output language
+- Default translation direction
+- Request timeout
+- Retry behavior
+- Privacy notice
+- Clear AI conversation history
+
+Account and data
+
+- Authentication providers
+- Profile
+- Sign out
+- Account deletion
+- Export data
+- Restore data
+- Import data
+- Reset preferences
+- Clear local data with explicit warnings
+
+Persist settings appropriately and synchronize account-level preferences when the user is authenticated.
+
+14. AUTHENTICATION
+
+Use Supabase Auth.
+
+Support:
+
+- Email and password registration
+- Email and password sign-in
+- Sign-out
+- Email verification when configured
+- Password reset
+- Google OAuth
+- GitHub OAuth
+- Session restoration
+- Loading and error states
+- Authenticated and unauthenticated navigation
+- Account deletion flow
+- Clear configuration guidance for each OAuth provider
+
+OAuth requires provider credentials and correctly configured redirect URLs. Do not simulate successful OAuth when configuration is missing.
+
+Explain the configuration steps in the documentation.
+
+The application must not require authentication to use its local-only functionality.
+
+If a user later signs in, offer a clear, safe flow to merge local data into the account or keep it separate. Never silently overwrite existing local or cloud data.
+
+15. SUPABASE DATABASE DESIGN
+
+Design a normalized PostgreSQL schema that may include:
+
+- profiles
+- programming_languages
+- categories
+- courses
+- lessons
+- lesson_revisions
+- tags
+- lesson_tags
+- code_snippets
+- flashcards
+- review_records
+- user_preferences
+- synchronization metadata where appropriate
+
+Adapt the schema to actual feature needs. Avoid unnecessary tables.
+
+Requirements:
+
+- Stable UUID identifiers.
+- User ownership.
+- Foreign-key constraints.
+- Useful indexes.
+- Created and updated timestamps.
+- Soft deletion or recoverable deletion where needed.
+- Explicit cascade behavior.
+- Appropriate uniqueness constraints.
+- Database migrations in version-controlled SQL files.
+- Row Level Security on every user-owned table.
+- Policies that enforce ownership.
+- No reliance on client-side filtering as a security boundary.
+
+A user must never read, modify, or delete another user's private data.
+
+Do not expose service-role credentials in browser code.
+
+Provide a documented SQL schema and setup instructions.
+
+16. SUPABASE STORAGE
+
+Use Supabase Storage for optional cloud files:
+
+- User-imported fonts
+- Lesson attachments
+- Optional images
+- Optional backup archives
+
+Store file metadata and ownership information in the database.
+
+Requirements:
+
+- Private buckets by default.
+- User-scoped storage paths.
+- Storage access policies.
+- File size limits.
+- Allowed MIME types and extension checks.
+- Upload progress and error states.
+- Retry support.
+- Delete confirmation.
+- Cleanup of orphaned files.
+- Storage usage display when measurable.
+- Graceful handling of quota exhaustion.
+- Signed URLs when needed for private downloads.
+- No assumption that every file should be uploaded automatically.
+
+Keep ordinary notes and code snippets in PostgreSQL rather than unnecessarily creating individual files.
+
+The app must remain useful if cloud file storage is unavailable or exhausted.
+
+17. LOCAL-FIRST DATABASE AND OFFLINE SUPPORT
+
+IndexedDB is the primary local persistence layer.
+
+Implement a modular data access layer rather than accessing IndexedDB directly from UI components.
+
+Possible modules:
+
+- database.js
+- repositories/
+- migrations/
+- sync-engine.js
+- sync-queue.js
+- conflict-resolver.js
+- connectivity.js
+
+Use a maintained IndexedDB wrapper such as the idb library if it reduces complexity and is compatible with the static architecture.
+
+Offline requirements
+
+When offline, users must be able to:
+
+- Open previously cached lessons
+- Create lessons
+- Edit lessons
+- Delete or restore lessons
+- Manage categories and tags
+- Search locally stored content
+- Use code snippets
+- Change local preferences
+- Review saved study materials
+- Export local data
+
+AI requests and other network-dependent operations must display a clear unavailable state when offline.
+
+Sync engine
+
+Build an explicit synchronization engine for local-first operations.
+
+Requirements:
+
+- Persistent operation queue.
+- Idempotent operation handling.
+- Automatic retries with exponential backoff and jitter.
+- Retryable versus permanent error classification.
+- Stable record IDs generated locally.
+- Pending, syncing, synced, and failed statuses.
+- Safe handling of offline deletes.
+- Queue recovery after reload or browser restart.
+- Network recovery detection.
+- Manual retry.
+- Duplicate prevention.
+- Conflict detection.
+- User-visible synchronization status.
+
+Do not assume that navigator.onLine proves the backend is reachable. Verify actual connectivity with appropriate requests.
+
+Use a single-flight or equivalent lock to prevent overlapping synchronization runs from processing the same queue incorrectly.
+
+Conflict handling
+
+Never silently overwrite conflicting content.
+
+Use revision numbers or another explicit versioning strategy, along with timestamps and ownership checks.
+
+If a remote record has changed since the local base version:
+
+- Detect the conflict.
+- Preserve both versions.
+- Offer a comparison view.
+- Allow the user to choose the local version, remote version, or merge content where practical.
+- Record the resolution.
+
+Timestamps alone are not a sufficient conflict-resolution strategy.
+
+Do not permanently delete data until the relevant deletion has synchronized safely.
+
+Service worker
+
+Use a service worker for offline application-shell caching when deployed over HTTPS or localhost.
+
+Cache versioned static assets and approved dependencies.
+
+Do not cache authenticated API responses indiscriminately.
+
+Do not assume a service worker can operate from file://.
+
+Document how to update cached application assets without losing user data.
+
+18. DATA IMPORT, EXPORT, AND RECOVERY
+
+Provide:
+
+- Full JSON backup
+- JSON restore
+- Markdown export
+- TXT export
+- HTML export where practical
+- Lesson-level export
+- Code snippet export
+- Optional ZIP export for multiple files when an appropriate library is included
+
+Use a versioned backup format with:
+
+- Schema version
+- Export timestamp
+- Application version
+- Data records
+- Relevant metadata
+- Optional file manifest
+
+Validate imported files before changing existing data.
+
+Show a preview of import counts and possible conflicts.
+
+Support merge and replace modes.
+
+Replace mode must require explicit confirmation.
+
+Do not silently overwrite existing records or import malformed content.
+
+Preserve stable IDs where appropriate.
+
+If a browser backup or file import is interrupted, keep existing data intact.
+
+19. AI LEARNING ASSISTANT
+
+Use Groq API with configurable model IDs.
+
+Do not hard-code a single model throughout the application.
+
+Provide a configurable default model based on the current Groq-supported models and the user's available access. Document how to change it.
+
+AI features:
+
+- Explain code.
+- Explain programming concepts.
+- Translate English and Burmese.
+- Preserve technical terminology where possible.
+- Summarize lessons.
+- Generate examples.
+- Help interpret errors.
+- Suggest debugging steps.
+- Generate quizzes and flashcards.
+- Convert selected text into structured notes.
+- Save selected AI results as draft lessons.
+- Use selected lesson content as optional context.
+
+AI interaction
+
+Provide:
+
+- Streaming responses where supported.
+- Clear loading and cancellation states.
+- Request timeouts.
+- Retry controls.
+- Copy response.
+- Regenerate response.
+- Clear conversation.
+- Conversation history where enabled.
+- Markdown rendering.
+- Syntax-highlighted code blocks.
+- Safe link rendering.
+- Token or response-length controls where supported.
+- Helpful rate-limit messages.
+- Graceful handling of invalid keys and unavailable models.
+
+AI output must not automatically replace existing lesson content.
+
+Require the user to review proposed changes before applying them.
+
+API security
+
+Support personal Bring Your Own Key mode.
+
+Never hard-code Groq API keys.
+
+Never put a shared production API key in frontend code.
+
+Treat browser-stored API keys as exposed to anyone who can access the browser profile or application environment. Do not claim they are completely secure.
+
+For a public multi-user deployment, prefer an authenticated server-side proxy implemented as a Supabase Edge Function. Keep shared credentials in server-side secrets and enforce authorization, request limits, input size limits, and abuse protection.
+
+The frontend must handle AI-unavailable states without breaking other features.
+
+AI must be optional and must not be required for basic note management.
+
+20. SECURITY AND PRIVACY
+
+Implement:
+
+- Supabase Row Level Security.
+- Secure ownership policies.
+- Input validation.
+- Safe DOM rendering.
+- No unsanitized HTML insertion from notes or AI responses.
+- Safe Markdown rendering with raw HTML disabled by default.
+- URL validation.
+- File validation.
+- Protection against accidental script execution.
+- No secrets committed to source control.
+- A documented configuration file based on a safe example template.
+- Clear privacy notices for AI requests.
+- User-controlled AI context.
+- Data export and account deletion.
+
+Treat all user-generated content, imported documents, code blocks, and AI responses as untrusted input.
+
+Do not automatically send the user's entire note library to an AI provider. Send only the content necessary for the specific request, with clear user control.
+
+Do not claim that a client-only API key is protected by frontend obfuscation.
+
+21. LOADING, STATUS, AND ERROR HANDLING
+
+Every asynchronous feature must have appropriate UI states.
+
+Examples:
+
+- Initial loading
+- Local data loading
+- Cloud synchronization
+- Saving locally
+- Saving to cloud
+- Offline mode
+- Pending changes
+- Empty results
+- Invalid input
+- Authentication errors
+- Permission errors
+- Rate limits
+- Network failures
+- Storage quota errors
+- Import failures
+- Export failures
+- AI errors
+- Recoverable conflicts
+- Permanent failures
+
+Use custom toasts, dialogs, progress indicators, and inline messages.
+
+Avoid infinite loading indicators.
+
+Use timeouts where appropriate.
+
+Do not show fake percentages for operations whose progress cannot be measured.
+
+Make errors actionable and understandable.
+
+Log technical details in development without leaking secrets or private note content.
+
+22. PERFORMANCE
+
+Keep the application responsive on ordinary desktop and laptop hardware.
+
+Use:
+
+- IndexedDB indexes
+- Efficient DOM updates
+- Debounced input where appropriate
+- Pagination or virtualization when justified
+- Lazy-loaded nonessential features
+- Efficient event handling
+- Minimal unnecessary dependencies
+- Reasonable cache limits
+- Cleanup of event listeners and object URLs
+
+Avoid rebuilding the entire application interface for every small state change.
+
+Do not introduce complex state-management libraries unless a documented need exists.
+
+23. TESTING
+
+Provide a practical testing strategy.
+
+Test at minimum:
+
+- Lesson CRUD
+- Category and tag management
+- Search and filtering
+- Autosave
+- Code copying
+- Import and export
+- Local database persistence
+- Offline editing
+- Queue persistence across reloads
+- Retry after reconnecting
+- Duplicate operation prevention
+- Conflict detection
+- Authentication flows
+- Row Level Security behavior
+- Unauthorized data access prevention
+- Storage upload and download policies
+- AI configuration and error handling
+- Responsive navigation
+- Theme persistence
+- Font import and fallback
+- Keyboard navigation
+- Recovery after failed operations
+
+Use lightweight automated tests where practical. Tests may use a development-only toolchain, but normal application usage must not depend on Python, Node.js, or a running localhost server.
+
+Include a manual test checklist for features that require configured external services.
+
+Do not claim a test passed unless it was actually run.
+
+24. PROJECT STRUCTURE
+
+Use a clear modular structure similar to:
+
+/
+index.html
+manifest.webmanifest
+sw.js
+README.md
+AGENTS.md
+.gitignore
+.env.example
+src/
+assets/
+fonts/
+bundled/
+fonts-manifest.json
+styles/
+tokens.css
+themes.css
+typography.css
+layout.css
+components.css
+utilities.css
+scripts/
+app.js
+config.js
+router.js
+state.js
+components/
+pages/
+features/
+dashboard/
+library/
+editor/
+snippets/
+review/
+assistant/
+settings/
+auth/
+services/
+supabase-client.js
+auth-service.js
+ai-service.js
+export-service.js
+import-service.js
+db/
+database.js
+migrations/
+repositories/
+sync/
+sync-engine.js
+sync-queue.js
+conflict-resolver.js
+utils/
+vendor/
+supabase/
+migrations/
+functions/
+tests/
+docs/
+
+Adapt the structure when a simpler arrangement is more appropriate.
+
+Do not create empty modules merely to fill the directory tree.
+
+Do not bundle private keys, credentials, or real user data.
+
+The .env.example file must contain placeholders only. Static frontend configuration must contain only publishable values.
+
+If a third-party library requires a build process for local development, keep that process optional and document why it is needed.
+
+25. DOCUMENTATION AND SETUP
+
+Write a useful README that explains:
+
+- Project purpose
+- Features
+- Folder structure
+- Browser requirements
+- Running locally without a mandatory server where supported
+- Static hosting deployment
+- Supabase project creation
+- Database migration setup
+- RLS policy setup
+- Email/password authentication
+- Google OAuth setup
+- GitHub OAuth setup
+- Redirect URL configuration
+- Storage bucket setup
+- Groq BYOK configuration
+- Optional Edge Function deployment
+- Offline behavior
+- Backup and restore
+- Testing
+- Troubleshooting
+
+Do not require the user to guess missing configuration steps.
+
+Clearly distinguish mandatory configuration from optional integrations.
+
+Do not claim Google or GitHub login will work before their credentials and redirect URLs have been configured.
+
+26. IMPLEMENTATION STRATEGY
+
+Build in functional phases:
+
+Phase 1: Foundation, design tokens, layout, navigation, reusable components.
+
+Phase 2: IndexedDB, data models, local CRUD, search, editor, code blocks.
+
+Phase 3: Settings, themes, fonts, import/export, review tools.
+
+Phase 4: Supabase schema, RLS, authentication, cloud repositories.
+
+Phase 5: Sync queue, conflict detection, offline recovery, service worker.
+
+Phase 6: Groq AI assistant and optional server-side proxy.
+
+Phase 7: Testing, accessibility, responsive polish, documentation.
+
+At each phase:
+
+- Implement actual functionality.
+- Verify the relevant behavior.
+- Keep existing working functionality intact.
+- Fix errors before adding more features.
+- Update documentation when architecture changes.
+
+Do not stop after generating a static mockup or initial file structure.
+
+Do not claim completion while core actions are placeholders.
+
+If credentials are unavailable, implement the integration correctly and provide a clear setup flow. Test the parts that do not require credentials and document what remains unverified.
+
+27. DEFINITION OF DONE
+
+The project is complete only when:
+
+- The UI is polished, responsive, and accessible.
+- Core note operations work without a network connection.
+- Data persists after browser reloads.
+- Search and sorting work on real saved records.
+- Code blocks are highlighted and copyable.
+- User preferences persist.
+- Import/export works with validated data.
+- Cloud authentication works after configuration.
+- Database ownership is enforced by RLS.
+- Cloud synchronization is idempotent and conflict-aware.
+- Network errors do not destroy local changes.
+- AI is optional and its configuration is understandable.
+- No shared API secrets are exposed in the frontend.
+- Loading, success, empty, and error states are implemented.
+- The README provides usable setup and deployment instructions.
+- The project contains understandable comments explaining non-obvious logic.
+- No core feature is represented by a decorative or nonfunctional control.
+
+Start by inspecting the current project if one exists. Then create or update the architecture and implement the application incrementally. Make reasonable decisions without repeatedly asking the user to approve routine technical details.
