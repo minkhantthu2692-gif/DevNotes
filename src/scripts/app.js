@@ -27,6 +27,7 @@ import { ensureSyncChoice, hasDecidedChoice } from './features/auth/sync-choice.
 import { authStore, bootStore } from './state.js';
 import { shortcut } from './utils/keyboard.js';
 import { bus } from './utils/bus.js';
+import { initStyleGuard } from './features/diagnostics/style-guard.js';
 
 const RETRY_SYNC_CHOICE_MS = 90_000;
 let lastChoiceAttempt = 0;
@@ -150,6 +151,12 @@ async function boot() {
   document.getElementById('app-shell')?.removeAttribute('hidden');
   document.getElementById('boot-status')?.setAttribute('hidden', '');
   bootStore.set({ status: 'ready', message: '' });
+
+  // If no stylesheet applied (poisoned cache, proxy, extension), the page is
+  // functional but unreadable — surface that with a recovery path instead of
+  // silently rendering raw content.
+  initStyleGuard();
+
   bus.emit('app:ready');
 }
 

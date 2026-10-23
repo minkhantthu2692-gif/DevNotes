@@ -118,6 +118,7 @@ supabase/
 tests/
   unit/                  Node test-runner suite (fake-indexeddb)
   browser/run.mjs         Playwright smoke test against a local static server
+  browser/stylecheck.mjs  diagnostic: verify stylesheets load and apply
 ```
 
 ## Configuration: what is required vs optional
@@ -196,7 +197,7 @@ Model IDs drift over time — the default is `llama-3.3-70b-versatile`; **Settin
 
 ## Offline behavior
 
-- The service worker precaches the app shell (HTML, CSS, fonts stylesheet, icons) and then serves same-origin GETs cache-first with background refresh, so modules and fonts load instantly offline after first use.
+- The service worker precaches the app shell (HTML, CSS, fonts stylesheet, icons) after validating every entry's content type — install aborts rather than persist a proxy error page — and then serves same-origin GETs stale-while-revalidate, so modules and fonts load instantly offline after first use and a bad cache entry heals on the next successful reload. If no stylesheet applies at all (poisoned cache, proxy, extension), the app detects it after boot and offers a one-click "clear cache and reload" recovery.
 - Navigation falls back to the cached `index.html`; cross-origin responses (Supabase, Groq) are **never** cached.
 - Your data is independent of the cache: it lives in IndexedDB, which the service worker does not touch. If the browser evicts the service-worker cache, the app simply refetches the shell next time.
 - Offline you can read and edit everything; queued sync operations wait for reconnection.
@@ -225,14 +226,15 @@ Both suites were executed against this codebase:
 
 ```sh
 npm test               # unit suite: 87 tests, 6 files  → 87 pass / 0 fail
-npm run test:browser   # browser smoke: 11 steps       → 11 pass / 0 fail
+npm run test:browser   # browser smoke: 12 steps       → 12 pass / 0 fail
+node tests/browser/stylecheck.mjs   # diagnose CSS loading on any deployment
 
 # Run the same smoke steps against a deployed copy instead of a local server:
 SMOKE_ORIGIN=https://<user>.github.io/DevNotes npm run test:browser
 ```
 
 - **Unit** (`node --test` + `fake-indexeddb`): validation/normalization (including backup validation rules), search parsing/scoring/flags/highlighting, error classification and backoff, the sync queue (coalescing, claim, failure classes, exhaustion, retry, discard, suspension), repositories (CRUD, revisions, activity coalescing, trash lifecycle, flashcard approval/scheduling, taxonomy dedupe), and import/export (size/parse guards, diffing, merge/replace semantics). `localStorage` is polyfilled in `tests/unit/helpers/env.js`.
-- **Browser** (`playwright-core` + your installed Chrome or Edge — no browser download): serves the repo over HTTP, then verifies boot, dashboard, empty library, lesson creation with autosave and URL swap, **persistence across reload**, settings rendering, **dialog accessibility** (keyboard open, `aria-modal`, Escape closes, focus restored to the trigger), **every route mounting without runtime errors**, **service-worker precache + a full boot while offline**, and zero uncaught page errors. Set `CHROME_PATH` if your browser lives somewhere non-standard. With `SMOKE_ORIGIN` set the local server is skipped and the steps run against that URL — use it to verify a deployment (this project's GitHub Pages copy was validated this way).
+- **Browser** (`playwright-core` + your installed Chrome or Edge — no browser download): serves the repo over HTTP, then verifies boot, **design-system styles actually loading and applying** (tokens resolve, grid layout active — catches the "app renders unstyled" failure class), dashboard, empty library, lesson creation with autosave and URL swap, **persistence across reload**, settings rendering, **dialog accessibility** (keyboard open, `aria-modal`, Escape closes, focus restored to the trigger), **every route mounting without runtime errors**, **service-worker precache + a full boot while offline**, and zero uncaught page errors. Set `CHROME_PATH` if your browser lives somewhere non-standard. With `SMOKE_ORIGIN` set the local server is skipped and the steps run against that URL — use it to verify a deployment (this project's GitHub Pages copy was validated this way). `tests/browser/stylecheck.mjs` is a standalone diagnostic that reports every CSS response a browser sees plus computed-style probes, for debugging unstyled renders.
 
 Tests requiring real Supabase/Groq credentials (live RLS policies, live OAuth, real proxy rate limits) cannot run offline and are **not** included; the migration's RLS policies should be verified against your project (Supabase provides SQL tests in the dashboard). The local suites require no network access; only `SMOKE_ORIGIN` runs do.
 

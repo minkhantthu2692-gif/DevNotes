@@ -147,6 +147,23 @@ async function main() {
       assert(bootHidden, '#boot-status never hid — the app failed to finish booting');
     });
 
+    await step('design system: stylesheets load and apply', async () => {
+      // Regression guard for "app boots but renders unstyled" (poisoned
+      // service-worker cache, proxy error pages, extension stripping CSS):
+      // DOM-only checks pass in that state, so assert computed styles too.
+      const probe = await page.evaluate(() => {
+        const root = getComputedStyle(document.documentElement);
+        return {
+          sheets: document.styleSheets.length,
+          token: root.getPropertyValue('--sp-1').trim(),
+          shellDisplay: getComputedStyle(document.getElementById('app-shell')).display,
+        };
+      });
+      assert(probe.sheets >= 10, `expected >=10 stylesheets, found ${probe.sheets}`);
+      assert(probe.token === '0.25rem', `--sp-1 is "${probe.token}" — tokens.css did not apply`);
+      assert(probe.shellDisplay === 'grid', `#app-shell is ${probe.shellDisplay} — layout.css did not apply`);
+    });
+
     await step('dashboard renders its header', async () => {
       // The dashboard greets by time of day; the route title is the stable signal.
       const heading = page.locator('#app-shell .page-header h1').first();
