@@ -165,7 +165,11 @@ supabase db push          # supabase/migrations/0001_init.sql ကို remote D
 ### 6.4 အောင်မြင်ကြောင်း စစ်ဆေးခြင်း
 
 1. Dashboard → **Table Editor** → table ၇ ခု မြင်ရပြီး
-2. အောက်ပါ curl ကို run ပါ (anon key ဖြင့်၊ အကောင့်မဝင်ဘဲ) — **`[]` (ဗလာ array)** ပြန်ပါက RLS အလုပ်လုပ်နေသည် သက်သေပြသည်:
+2. အောက်ပါ curl ကို run ပါ (anon key ဖြင့်၊ အကောင့်မဝင်ဘဲ)။ **ရလဒ်အဓိပ္ပာယ်ဖွင့်ဆိုနည်း:** (ဤစီမံကိန်းတွင် အတည်ပြုပြီး)
+
+   - **`[]` + HTTP 200** → ✅ **migration ပြီးပြီ + RLS အလုပ်လုပ်နေသည်** — table ရှိပြီး၊ session မရှိသော anon အတွက် RLS က row အားလုံးကို ဖုံးပစ်သောကြောင့် ဗလာ array သာ ပြန်သည်
+   - `relation "public.lessons" does not exist` (**HTTP 42P01**) → ❌ migration မတင်ရသေးသေး
+   - HTTP 401 → anon key မှား/မပါ
 
 ```sh
 curl "https://otbjkarkexqfujotsdcw.supabase.co/rest/v1/lessons?select=id&limit=1" \
@@ -403,7 +407,7 @@ SMOKE_ORIGIN=https://minkhantthu2692-gif.github.io/DevNotes npm run test:browser
 ### B. Supabase
 
 - [ ] Table Editor တွင် table ၇ ခု မြင်ရသည် (အဆင့် 6)
-- [ ] anon key ဖြင့် (sign-in မဘဲ) REST query → `[]` ပြန်သည် (RLS အလုပ်လုပ်သည်)
+- [ ] anon key ဖြင့် (sign-in မဘဲ) REST query → **`[]` (HTTP 200)** ပြန်ပါက table ရှိပြီး RLS က anon အားလုံးကို ဖုံးပစ်ထားခြင်း (မှန်ကန်)။ `relation … does not exist` ဆိုပါက migration မတင်ရသေး
 - [ ] `config.js` ဖြည့် → push → CACHE bump → incognito တွင် sign up/in ရသည်
 - [ ] မှတ်စုပြင် → sync status **Synced** ဖြစ်သည်
 - [ ] offline တွင် ပြင် → ပြန် online → အလိုအလျောက် sync ပြီး
@@ -482,9 +486,9 @@ SMOKE_ORIGIN=https://minkhantthu2692-gif.github.io/DevNotes npm run test:browser
 | 3 | GitHub Pages hosting | ✅ live |
 | 4 | Supabase project | ✅ ရှိပြီး (`otbjkarkexqfujotsdcw`) |
 | 5 | Supabase CLI install + init | ✅ ပြီး (`v2.122.0`) |
-| 5.3–5.4 | CLI login + link | ⬜ login လုပ်ပြီး link ဆက်လုပ်ပါ |
-| 6 | Migration `db push` | ⬜ |
-| 7 | `config.js` (url + anonKey) | ⬜ |
+| 5.3–5.4 | CLI login + link | ✅ ပြီး |
+| 6 | Migration `db push` | ✅ `0001_init.sql` တင်ပြီး (REST `[]` 200 ဖြင့် အတည်ပြု) |
+| 7 | `config.js` (url + anonKey) | ✅ ဖြည့်ပြီး (test 87+11 ပြီး) |
 | 8 | Site URL / Redirect URLs / Email | ⬜ |
 | 9–10 | Google + GitHub OAuth | ⬜ |
 | 11 | AI (BYOK သို့ proxy) | ⬜ |

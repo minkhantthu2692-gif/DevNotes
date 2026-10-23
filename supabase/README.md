@@ -75,7 +75,8 @@ The anon/publishable key ships to every browser — that is how Supabase is
 meant to work. **Row Level Security is the security boundary**: every table in
 this directory has RLS enabled with `auth.uid() = user_id` policies scoped to
 `authenticated`, so a session can only ever read/write its own rows, and the
-`anon` role has neither policies nor table grants. Never use the service-role
+`anon` role has no policies, so anonymous REST queries return zero rows
+(verified live against this project: `[]` with HTTP 200). Never use the service-role
 key in the frontend; it bypasses RLS entirely.
 
 ### OAuth redirect URLs
