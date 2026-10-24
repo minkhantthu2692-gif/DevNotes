@@ -252,17 +252,36 @@
   gap: var(--sp-2);
   min-width: 0;
   transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  position: relative;
 }
 .card--interactive { cursor: pointer; text-align: left; }
 .card--interactive:hover {
   border-color: var(--color-accent-border);
   box-shadow: var(--shadow-2);
 }
+.card--interactive:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 .card--link { text-decoration: none; color: inherit; }
 .card__title { font-size: var(--fs-base); font-weight: var(--fw-semibold); }
 .card__meta { font-size: var(--fs-xs); color: var(--color-text-muted); display: flex; gap: var(--sp-2); flex-wrap: wrap; }
-.card__body { font-size: var(--fs-md); color: var(--color-text-muted); }
+.card__meta .language,
+.card__meta .category {
+  color: var(--color-text-faint);
+  font-size: var(--fs-xs);
+}
+.card__body { font-size: var(--fs-md); color: var(--color-text-muted); line-height: 1.4; }
 .card__actions { display: flex; gap: var(--sp-1); margin-top: auto; padding-top: var(--sp-2); }
+/* Card subtle overlay for dark mode */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--color-surface-overlay);
+  opacity: 0.3;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+.card--interactive:hover::before { opacity: 0.15; }
 
 .stat {
   background: var(--color-surface);
@@ -738,28 +757,39 @@
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  padding: var(--row-pad-y) var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
   border-bottom: 0.0625rem solid var(--color-border);
   min-width: 0;
   text-decoration: none;
   color: inherit;
   background: transparent;
-  transition: background var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
   font-family: inherit;
   font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   text-align: left;
   width: 100%;
+  position: relative;
 }
 .list__row:last-child { border-bottom: 0; }
-.list__row:hover { background: var(--color-surface-2); }
+.list__row:hover { background: var(--color-surface-2); border-color: var(--color-border-strong); }
 .list__row[aria-current="true"],
-.list__row[data-selected="true"] { background: var(--color-accent-soft); }
-.list__row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.125rem; }
+.list__row[data-selected="true"] { background: var(--color-accent-soft); border-left: 0.125rem solid var(--color-accent); }
+.list__row.main-active { border-color: var(--color-accent); }
+.list__row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-1); position: relative; z-index: 1; }
 .list__row-title {
-  font-weight: var(--fw-medium);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-base);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.list__row-title .badge {
+  margin-left: var(--sp-1);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
 }
 .list__row-sub {
   font-size: var(--fs-xs);
@@ -768,8 +798,40 @@
   gap: var(--sp-2);
   flex-wrap: wrap;
   align-items: center;
+  margin-top: var(--sp-1);
+  font-weight: var(--fw-normal);
 }
-.list__row-actions { display: flex; gap: var(--sp-1); flex: none; }
+.list__row-sub .language,
+.list__row-sub .category {
+  color: var(--color-text-faint);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+.list__row-sub .time {
+  color: var(--color-text);
+  font-weight: var(--fw-medium);
+}
+.list__row-actions { display: flex; gap: var(--sp-1); flex: none; align-items: center; }
+.list__row-actions .icon-btn {
+  padding: var(--sp-1);
+  opacity: 0.6;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+.list__row-actions .icon-btn:hover { opacity: 1; }
+
+/* Focus ring for keyboard navigation */
+.list__row:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+
+/* --- Filter bar ----------------------------------------------------------- */
+.filter-bar {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  align-items: center;
+  padding: var(--sp-3);
+  background: var(--color-surface);
+  border: 0.0625rem solid var(--color-border);
+
 
 /* --- Filter bar ----------------------------------------------------------- */
 .filter-bar {
