@@ -16,7 +16,16 @@ export const PROFILE_LIMITS = {
   usernameMin: 2,
   fullName: 80,
   bio: 160,
+  // Cap on the STORED object, enforced on the ENCODED output by normalizeImage.
+  // The picked file is allowed to be far bigger (see avatarSourceBytes): it is
+  // downscaled and re-encoded, so what matters for sync cost is the stored size.
   avatarBytes: 512 * 1024, // 512 KB — small enough to keep sync pulls cheap
+  // Cap on the picked file itself. Only bounds decode memory/time, since the
+  // image is shrunk to avatarSide before encoding.
+  avatarSourceBytes: 10 * 1024 * 1024, // 10 MB
+  // Longest edge of the stored avatar. The header renders it at <= 72 CSS px,
+  // so 512 px is generous even on high-density screens.
+  avatarSide: 512,
 };
 
 export const USERNAME_RE = /^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/;
@@ -110,6 +119,45 @@ export function initialFrom(username, fullName) {
   if (!source) return '?';
   const chars = Array.from(source);
   return (chars[0] || '?').toUpperCase();
+}
+
+/**
+ * In-memory profile → a `profiles` row (PostgREST column names).
+ *
+ * The mapping is explicit rather than a generic case converter so that a typo
+ * or an unsupported field can never reach the database: PostgREST rejects any
+ * key that is not a real column with "Could not find the '<key>' column … in
+ * the schema cache". Only the fields the app actually writes are listed.
+ *
+ * `avatar_path` is deliberately absent: the object path is always
+ * `<uid>/avatar.png`, so it is redundant (see uploadAvatar).
+ *
+ * Pure and unit tested (tests/unit/profile.test.js) against the column names
+ * in supabase/migrations/0002_profiles.sql.
+ */
+export function toRow(profile = {}) {
+  const row = {};
+  if (profile.username !== undefined) row.username = profile.username;
+  if (profile.fullName !== undefined) row.full_name = profile.fullName;
+  if (profile.bio !== undefined) row.bio = profile.bio;
+  if (profile.avatarUrl !== undefined) row.avatar_url = profile.avatarUrl;
+  return row;
+}
+
+/**
+ * `profiles` row → in-memory profile. The inverse of toRow.
+ * Tolerates missing columns (a schema that has not yet run every migration
+ * simply yields undefined, normalised to ''/null here).
+ */
+export function fromRow(row = {}) {
+  return {
+    userId: row.user_id ?? null,
+    username: row.username || '',
+    fullName: row.full_name || '',
+    bio: row.bio || '',
+    avatarUrl: row.avatar_url || null,
+    updatedAt: row.updated_at || null,
+  };
 }
 
 /** Stable small integer so the same initial always picks the same colors. */

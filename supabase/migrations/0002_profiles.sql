@@ -55,9 +55,6 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   full_name    text,
   bio          text,
   avatar_url   text,
-  -- Storage object path inside the `devnotes-avatars` bucket (…/<uid>/avatar.png).
-  -- Kept so a later upload can overwrite the old object instead of accumulating.
-  avatar_path  text,
   updated_at   timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT profiles_username_unique UNIQUE (username),
   -- Keep usernames short and sane even though the client also validates.

@@ -1,6 +1,7 @@
 import './helpers/env.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   PROFILE_LIMITS,
@@ -11,6 +12,8 @@ import {
   deriveAvatarUrl,
   avatarPalette,
   initialFrom,
+  toRow,
+  fromRow,
 } from '../../src/scripts/features/account/profile.js';
 
 /* ------------------------------------------------------------ usernames -- */
@@ -92,4 +95,73 @@ test('avatarPalette: deterministic for the same seed, and returns a valid pair',
 test('avatarPalette: tolerates an empty seed without throwing', () => {
   const [bg] = avatarPalette(undefined);
   assert.ok(bg, 'an undefined seed still yields a color');
+});
+
+/* --------------------------------------------------- db mapping (toRow) --- */
+
+/**
+ * Column names of public.profiles, parsed from the migration itself so this
+ * test fails if the code and the schema ever drift apart again.
+ *
+ * Regression guard: the first version of this feature spread camelCase patch
+ * keys straight into the PostgREST upsert, which rejected the write with
+ * "Could not find the 'avatarPath' column of profiles in the schema cache" —
+ * silently breaking avatar saves and profile edits.
+ */
+function profilesColumns() {
+  const sql = readFileSync(new URL('../../supabase/migrations/0002_profiles.sql', import.meta.url), 'utf8');
+  const body = sql.match(/CREATE TABLE IF NOT EXISTS public\.profiles \(([\s\S]*?)\n\);/);
+  assert.ok(body, '0002_profiles.sql still creates public.profiles');
+  const cols = new Set();
+  for (const line of body[1].split('\n')) {
+    const m = /^\s{2}([a-z][a-z0-9_]*)\s+[a-z]/.exec(line);
+    if (m && m[1] !== 'constraint') cols.add(m[1]);
+  }
+  assert.ok(cols.size > 0, 'parsed at least one column');
+  return cols;
+}
+
+test('toRow: emits snake_case keys that exist in the migration', () => {
+  const columns = profilesColumns();
+  const row = toRow({ username: 'jane', fullName: 'Jane', bio: 'hi', avatarUrl: 'https://x/y.png' });
+
+  assert.deepEqual(row, { username: 'jane', full_name: 'Jane', bio: 'hi', avatar_url: 'https://x/y.png' });
+  for (const key of Object.keys(row)) {
+    assert.ok(columns.has(key), `toRow emitted "${key}" but the migration has no such column`);
+  }
+});
+
+test('toRow: never emits camelCase or a column the migration lacks', () => {
+  const row = toRow({ username: 'jane', fullName: 'Jane', bio: 'hi', avatarUrl: 'https://x/y.png' });
+  for (const key of Object.keys(row)) {
+    assert.ok(!/[A-Z]/.test(key), `PostgREST cannot resolve camelCase key "${key}"`);
+  }
+  // avatar_path is redundant (the object path is always <uid>/avatar.<ext>) and
+  // is absent from the schema; it must never come back.
+  assert.ok(!('avatar_path' in row), 'avatar_path is not written');
+});
+
+test('toRow: ignores unknown fields so an unsupported key cannot reach the DB', () => {
+  assert.deepEqual(toRow({ isAdmin: true, avatarPath: 'x/y.png', userId: 'abc' }), {});
+  assert.deepEqual(toRow({}), {});
+});
+
+test('fromRow: reads real columns and tolerates a schema missing optional ones', () => {
+  const columns = profilesColumns();
+  const read = fromRow({
+    user_id: 'u1', username: 'jane', full_name: 'Jane', bio: 'hi', avatar_url: 'https://x/y.png', updated_at: 'now',
+  });
+
+  assert.equal(read.username, 'jane');
+  assert.equal(read.fullName, 'Jane');
+  assert.equal(read.avatarUrl, 'https://x/y.png');
+  for (const value of ['user_id', 'username', 'full_name', 'bio', 'avatar_url', 'updated_at']) {
+    assert.ok(columns.has(value), `fromRow reads "${value}" but the migration has no such column`);
+  }
+
+  // A row from a schema that predates optional columns must not throw.
+  const sparse = fromRow({ user_id: 'u1', username: 'jane' });
+  assert.equal(sparse.bio, '');
+  assert.equal(sparse.avatarUrl, null);
+  assert.equal(sparse.updatedAt, null);
 });

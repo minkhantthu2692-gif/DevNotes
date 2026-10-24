@@ -24,8 +24,10 @@ import {
   avatarPalette,
   deriveAvatarUrl,
   deriveUsername,
+  fromRow,
   initialFrom,
   sanitizeAvatarUrl,
+  toRow,
   usernameFromName,
 } from './profile.js';
 
@@ -72,10 +74,6 @@ function validatePatch(patch = {}) {
     if (patch.avatarUrl && !clean.avatarUrl) {
       throw new AppError('Avatar link must be a valid https URL', { code: 'invalid-avatar', retryable: false });
     }
-  }
-
-  if (patch.avatarPath !== undefined) {
-    clean.avatarPath = patch.avatarPath || null;
   }
 
   return clean;
@@ -146,9 +144,11 @@ export async function updateProfile(patch = {}) {
   const clean = validatePatch(patch);
   const client = await getSupabaseClient();
 
+  // `clean` is camelCase (matches the in-memory profile shape); `toRow`
+  // converts it to the snake_case columns PostgREST expects.
   const { data, error } = await client
     .from('profiles')
-    .upsert({ user_id: user.id, ...clean, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+    .upsert({ user_id: user.id, ...toRow(clean), updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
     .select()
     .maybeSingle();
 
@@ -165,16 +165,19 @@ export async function updateProfile(patch = {}) {
 
 /**
  * Upload an avatar image and store its URL on the profile.
- * `file` is validated (type + size) and re-encoded client-side to a squarish
- * PNG blob so metadata/EXIF never leaves the browser and the stored bytes are
- * bounded (AGENTS.md §13 — never send more than necessary).
+ * `file` is validated (type + size) then re-encoded client-side to a square no
+ * larger than `avatarSide`, so metadata/EXIF never leaves the browser and the
+ * stored bytes are bounded by `avatarBytes` (AGENTS.md §13 — never send more
+ * than necessary). The cap is enforced on the ENCODED output, which the source
+ * size alone does not guarantee: a small JPEG can re-encode to a much larger
+ * lossless PNG.
  *
- * The image lands at `<uid>/avatar.png` in the `devnotes-avatars` bucket,
- * which is PUBLIC READ but owner-only WRITE (see supabase/migrations/
- * 0002_profiles.sql). It must be public-readable because the header renders it
- * via <img src> on every route — a private bucket would need a signed URL per
- * render that expires and breaks offline. Only you can write to your own
- * folder, so no one can replace your photo.
+ * The image lands at `<uid>/avatar.png` (or `.jpg` when PNG cannot fit the cap)
+ * in the `devnotes-avatars` bucket, which is PUBLIC READ but owner-only WRITE
+ * (see supabase/migrations/0002_profiles.sql). It must be public-readable
+ * because the header renders it via <img src> on every route — a private bucket
+ * would need a signed URL per render that expires and breaks offline. Only you
+ * can write to your own folder, so no one can replace your photo.
  *
  * @returns {Promise<string>} the new avatar URL
  */
@@ -185,43 +188,89 @@ export async function uploadAvatar(file) {
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     throw new AppError('Choose a PNG, JPEG, WebP, GIF or AVIF image', { code: 'bad-type', retryable: false });
   }
-  if (file.size > PROFILE_LIMITS.avatarBytes) {
-    throw new AppError('Image must be smaller than 512 KB', { code: 'too-large', retryable: false });
+  // Only guards decode cost — the stored size is capped on the OUTPUT by
+  // normalizeImage, because re-encoding a small file can balloon (a small JPEG
+  // drawn at full size and saved as lossless PNG became a 2.8 MB object).
+  if (file.size > PROFILE_LIMITS.avatarSourceBytes) {
+    throw new AppError(`Image is too large — pick one under ${Math.round(PROFILE_LIMITS.avatarSourceBytes / (1024 * 1024))} MB`, { code: 'too-large', retryable: false });
   }
   if (!isSupabaseConfigured()) throw new AppError('Cloud sync is not configured', { code: 'not-configured', retryable: false });
 
-  const blob = await normalizeImage(file);
+  const { blob, ext } = await normalizeImage(file);
   const client = await getSupabaseClient();
-  const path = `${user.id}/avatar.png`;
+  const path = `${user.id}/avatar.${ext}`;
 
   const { error: upErr } = await client.storage.from(AVATARS_BUCKET).upload(path, blob, {
     cacheControl: '3600',
     upsert: true,
-    contentType: 'image/png',
+    contentType: ext === 'png' ? 'image/png' : 'image/jpeg',
   });
   if (upErr) throw new AppError(upErr.message || 'Could not upload the image', { code: 'upload', retryable: true });
+
+  // Drop a stale sibling from an earlier upload in the other format
+  // (avatar.png ↔ avatar.jpg) so the bucket never keeps an unreferenced copy.
+  // Best-effort: the profile already points at the new URL, so a failure here
+  // only costs a stray object.
+  const stalePath = path.replace(/\.[a-z0-9]+$/, ext === 'png' ? '.jpg' : '.png');
+  const { error: rmErr } = await client.storage.from(AVATARS_BUCKET).remove([stalePath]);
+  if (rmErr) console.warn('[account] stale avatar cleanup skipped:', rmErr.message);
 
   const { data } = client.storage.from(AVATARS_BUCKET).getPublicUrl(path, { download: false });
   const url = sanitizeAvatarUrl(data?.publicUrl);
   if (!url) throw new AppError('Uploaded image could not be resolved', { code: 'upload-url', retryable: true });
 
-  await updateProfile({ avatarUrl: url, avatarPath: path });
+  // The object path is deterministic (`<uid>/avatar.<ext>`) and the bucket's
+  // write policies scope to that folder, so nothing needs to be stored.
+  await updateProfile({ avatarUrl: url });
   return url;
 }
 
-/** Re-encode to a square PNG so EXIF/metadata is stripped and size is bounded. */
+/**
+ * Center-crop to a square, shrink to at most `avatarSide`, and re-encode.
+ *
+ * PNG is tried first (crisp edges for graphics/illustrations); if the encoded
+ * PNG exceeds the cap, JPEG is retried at falling qualities. The cap is
+ * checked on the RESULT, not the source file — that is the whole point of this
+ * function, since canvas re-encoding can multiply the byte count several times
+ * over. The output is deterministic and EXIF-free, so nothing about the
+ * original file leaves the browser (AGENTS.md §13).
+ *
+ * @returns {Promise<{blob: Blob, ext: 'png'|'jpg'}>} encoded image + its extension
+ */
 async function normalizeImage(file) {
   const bitmap = await createImageBitmap(file);
-  const size = Math.min(bitmap.width, bitmap.height);
+  // Square side to take from the source, and the side we actually store.
+  const crop = Math.min(bitmap.width, bitmap.height);
+  const out = Math.min(crop, PROFILE_LIMITS.avatarSide);
   const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
+  canvas.width = out;
+  canvas.height = out;
   const ctx = canvas.getContext('2d');
-  // Center-crop to a square.
-  ctx.drawImage(bitmap, (bitmap.width - size) / 2, (bitmap.height - size) / 2, size, size, 0, 0, size, size);
+  // Center-crop to a square, downscaling to `out` in the same draw.
+  ctx.drawImage(bitmap, (bitmap.width - crop) / 2, (bitmap.height - crop) / 2, crop, crop, 0, 0, out, out);
   bitmap.close?.();
-  return await new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new AppError('Could not process the image', { code: 'image', retryable: false }))), 'image/png');
+
+  const png = await toBlob(canvas, 'image/png');
+  if (png.size <= PROFILE_LIMITS.avatarBytes) return { blob: png, ext: 'png' };
+
+  for (const quality of [0.82, 0.7, 0.6]) {
+    const jpeg = await toBlob(canvas, 'image/jpeg', quality);
+    if (jpeg.size <= PROFILE_LIMITS.avatarBytes) return { blob: jpeg, ext: 'jpg' };
+  }
+
+  throw new AppError(
+    `Image could not be reduced below ${Math.round(PROFILE_LIMITS.avatarBytes / 1024)} KB — try a simpler image`,
+    { code: 'too-large', retryable: false },
+  );
+}
+
+function toBlob(canvas, type, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new AppError('Could not process the image', { code: 'image', retryable: false }))),
+      type,
+      quality,
+    );
   });
 }
 
@@ -293,17 +342,8 @@ function generatedAvatar(username, fullName, initial) {
 
 /* ------------------------------------------------------------- helpers --- */
 
-function fromRow(row) {
-  return {
-    userId: row.user_id,
-    username: row.username || '',
-    fullName: row.full_name || '',
-    bio: row.bio || '',
-    avatarUrl: row.avatar_url || null,
-    avatarPath: row.avatar_path || null,
-    updatedAt: row.updated_at || null,
-  };
-}
+/* fromRow/toRow live in ./profile.js (pure, unit tested against the column
+ * names in supabase/migrations/0002_profiles.sql) and are imported above. */
 
 /** Offline/unsigned fallback assembled purely from the auth user. */
 function localProfileFromUser(user) {
@@ -315,7 +355,6 @@ function localProfileFromUser(user) {
     fullName,
     bio: '',
     avatarUrl: deriveAvatarUrl(user),
-    avatarPath: null,
     updatedAt: null,
   };
 }

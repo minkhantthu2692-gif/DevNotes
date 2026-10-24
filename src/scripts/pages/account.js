@@ -636,7 +636,7 @@ export default {
           h('div', { class: 'field' }, [
             h('label', { class: 'field__label', attrs: { for: 'profile-avatar-file' }, text: 'Upload an image' }),
             fileInput,
-            h('div', { class: 'field__hint', attrs: { id: 'profile-avatar-hint' }, text: 'PNG, JPEG, WebP, GIF or AVIF, up to 512 KB. It is cropped to a square.' }),
+            h('div', { class: 'field__hint', attrs: { id: 'profile-avatar-hint' }, text: 'PNG, JPEG, WebP, GIF or AVIF, up to 10 MB. It is cropped to a square, resized, and stored at no more than 512 KB.' }),
           ]),
           h('div', { class: 'field' }, [
             h('label', { class: 'field__label', attrs: { for: 'profile-avatar-url' }, text: '…or use an image URL' }),
