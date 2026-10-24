@@ -113,6 +113,28 @@ export function deriveAvatarUrl(user) {
   return null;
 }
 
+/**
+ * The seed row for a brand-new account, derived from the auth user's metadata.
+ *
+ * Pure so it is unit tested against the real column names (see toRow): the
+ * values are snake_case because they go straight to PostgREST. Every field
+ * except user_id is nullable, and deriveUsername/deriveAvatarUrl return ''
+ * / null rather than throwing, so a provider that supplies nothing still
+ * produces a creatable row.
+ *
+ * @param {{id?:string, email?:string, user_metadata?:object}} user
+ * @returns {{user_id:string|null, username:string|null, full_name:string|null, avatar_url:string|null}}
+ */
+export function seedRowFromUser(user) {
+  const fullName = String(user?.user_metadata?.full_name || user?.user_metadata?.name || '').trim();
+  return {
+    user_id: user?.id || null,
+    username: deriveUsername(user) || null,
+    full_name: fullName || null,
+    avatar_url: deriveAvatarUrl(user),
+  };
+}
+
 /** First grapheme-ish character of a name for the generated avatar. */
 export function initialFrom(username, fullName) {
   const source = cleanText(fullName) || cleanText(username);

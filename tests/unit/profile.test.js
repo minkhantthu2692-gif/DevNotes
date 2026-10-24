@@ -12,6 +12,7 @@ import {
   deriveAvatarUrl,
   avatarPalette,
   initialFrom,
+  seedRowFromUser,
   toRow,
   fromRow,
 } from '../../src/scripts/features/account/profile.js';
@@ -144,6 +145,38 @@ test('toRow: never emits camelCase or a column the migration lacks', () => {
 test('toRow: ignores unknown fields so an unsupported key cannot reach the DB', () => {
   assert.deepEqual(toRow({ isAdmin: true, avatarPath: 'x/y.png', userId: 'abc' }), {});
   assert.deepEqual(toRow({}), {});
+});
+
+test('seedRowFromUser: emits real columns from OAuth metadata', () => {
+  const columns = profilesColumns();
+  const seed = seedRowFromUser({
+    id: 'u1',
+    email: 'mink.hant@example.com',
+    user_metadata: { user_name: 'octocat', full_name: 'Octo Cat', avatar_url: 'https://x/y.png' },
+  });
+
+  assert.deepEqual(seed, {
+    user_id: 'u1',
+    username: 'octocat',
+    full_name: 'Octo Cat',
+    avatar_url: 'https://x/y.png',
+  });
+  for (const key of Object.keys(seed)) {
+    assert.ok(columns.has(key), `seed emitted "${key}" but the migration has no such column`);
+    assert.ok(!/[A-Z]/.test(key), `PostgREST cannot resolve camelCase key "${key}"`);
+  }
+});
+
+test('seedRowFromUser: a provider that supplies nothing still yields a creatable row', () => {
+  // The seeding insert must never fail for lack of provider data: user_id is
+  // the primary key and everything else is nullable, so a bare account still
+  // gets a row the user can then edit.
+  const seed = seedRowFromUser({ id: 'u1', email: 'someone@example.com' });
+  assert.equal(seed.user_id, 'u1');
+  assert.equal(seed.username, 'someone');
+  assert.equal(seed.full_name, null);
+  assert.equal(seed.avatar_url, null);
+  assert.ok(!('bio' in seed), 'the seed leaves bio unset so the column default applies');
 });
 
 test('fromRow: reads real columns and tolerates a schema missing optional ones', () => {

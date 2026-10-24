@@ -27,6 +27,7 @@ import {
   fromRow,
   initialFrom,
   sanitizeAvatarUrl,
+  seedRowFromUser,
   toRow,
   usernameFromName,
 } from './profile.js';
@@ -103,32 +104,56 @@ export async function loadProfile() {
   }
 
   try {
-    const username = deriveUsername(user);
-    const fullName = String(user?.user_metadata?.full_name || user?.user_metadata?.name || '').trim();
-    const avatarUrl = deriveAvatarUrl(user);
+    let row = await selectRow(client, user.id);
 
-    const { data, error } = await client
-      .from('profiles')
-      .upsert(
-        {
-          user_id: user.id,
-          username: username || null,
-          full_name: fullName || null,
-          avatar_url: avatarUrl,
-        },
-        { onConflict: 'user_id', ignoreDuplicates: true },
-      )
-      .select()
-      .maybeSingle();
+    if (!row) {
+      // First run for this account: seed a row so the header has a name/photo.
+      // ON CONFLICT DO NOTHING keeps seeding from overwriting a row another tab
+      // may have created in the meantime.
+      const seed = seedRowFromUser(user);
+      const { error } = await client
+        .from('profiles')
+        .upsert(seed, { onConflict: 'user_id', ignoreDuplicates: true });
 
-    if (error) throw error;
-    cached = data ? fromRow(data) : localProfileFromUser(user);
+      if (error && error.code === '23505' && /profiles_username_unique/.test(error.message || '')) {
+        // The derived handle is already taken by someone else. The row matters
+        // more than the handle: retry with no username and let the user pick
+        // their own on the Account page.
+        const { error: retryErr } = await client
+          .from('profiles')
+          .upsert({ ...seed, username: null }, { onConflict: 'user_id', ignoreDuplicates: true });
+        if (retryErr) throw retryErr;
+      } else if (error) {
+        throw error;
+      }
+
+      // Re-read rather than trusting the insert: DO NOTHING returns no rows
+      // when another writer won the race, and the stored row is the source of
+      // truth for everything the user has edited.
+      row = await selectRow(client, user.id);
+    }
+
+    cached = row ? fromRow(row) : localProfileFromUser(user);
     return cached;
   } catch (err) {
     console.warn('[account] profile load failed:', err?.message);
     cached = localProfileFromUser(user);
     return cached;
   }
+}
+
+/**
+ * Read the signed-in user's profile row, or null when there is not one yet.
+ * @throws {Error} on any PostgREST failure, so callers can fall back loudly.
+ */
+async function selectRow(client, userId) {
+  const { data, error } = await client
+    .from('profiles')
+    .select()
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
 }
 
 /**
