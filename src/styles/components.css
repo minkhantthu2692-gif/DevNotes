@@ -344,7 +344,7 @@
   color: var(--color-text-muted);
   white-space: nowrap;
 }
-.badge--not-started { background: var(--color-surface-3); color: var(--color-text-muted); }
+.badge--not-started { background: var(--color-info-soft); color: var(--color-info); }
 .badge--learning { background: var(--color-warning-soft); color: var(--color-warning); }
 .badge--learned { background: var(--color-success-soft); color: var(--color-success); }
 .badge--danger { background: var(--color-danger-soft); color: var(--color-danger); }
