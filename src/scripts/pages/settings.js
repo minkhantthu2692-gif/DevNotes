@@ -1185,6 +1185,10 @@ async function buildAbout() {
         h('p', { text: `Version ${APP.version} · backup format ${APP.backupFormat}` }),
         h('p', { class: 'text-muted', text: 'DevNotes is an offline-first personal knowledge library. Your data stays in this browser; sync and AI are opt-in. No analytics, no tracking, no external requests unless you configure them.' }),
         h('p', { class: 'text-muted', text: `Storage in use: ${stats?.usage != null ? formatBytes(stats.usage) : 'estimate unavailable'}${stats?.quota ? ` of ${formatBytes(stats.quota)}` : ''}` }),
+        h('div', { class: 'stack stack--sm' }, [
+          h('a', { class: 'btn btn--sm', attrs: { href: 'privacy.html', target: '_blank', rel: 'noopener noreferrer' } }, [icon('external'), 'Privacy Policy']),
+          h('a', { class: 'btn btn--sm', attrs: { href: 'terms.html', target: '_blank', rel: 'noopener noreferrer' } }, [icon('external'), 'Terms of Service']),
+        ]),
       ]),
     ]),
     h('section', { class: 'section' }, [

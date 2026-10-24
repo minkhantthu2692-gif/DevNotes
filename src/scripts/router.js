@@ -140,6 +140,8 @@ async function handleRoute() {
     current = null;
   }
 
+  // Show loading state before the new page mounts.
+  if (outlet) outlet.classList.add('page-outlet--loading');
   bus.emit('navigation:start', { path, pageId });
 
   try {
@@ -205,6 +207,8 @@ async function handleRoute() {
     fallback.append(titleEl, msgEl);
     outlet.appendChild(fallback);
   }
+  // Hide loading state after page mount.
+  if (outlet) outlet.classList.remove('page-outlet--loading');
 }
 
 /** Boot the router. Returns the outlet element. */
