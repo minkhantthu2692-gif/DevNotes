@@ -232,10 +232,8 @@ body {
   font-weight: var(--fw-medium);
 }
 
-/* The username is redundant on narrow screens; keep the avatar only. */
-@media (max-width: 48rem) {
-  .account-btn__name { display: none; }
-}
+/* Account button: avatar only is applied together with the other mobile
+   topbar rules in the <=60rem block below. */
 
 .breadcrumbs {
   display: flex;
@@ -306,7 +304,7 @@ body {
   text-align: left;
 }
 .topbar__search:hover { border-color: var(--color-border-strong); }
-.topbar__search kbd { margin-left: auto; }
+.topbar__search kbd { margin-left: auto; white-space: nowrap; }
 
 .menu-toggle { display: none; }
 
@@ -364,6 +362,9 @@ body {
     position: fixed;
     inset: 0 auto 0 0;
     width: min(var(--sidebar-w), 82vw);
+    /* The drawer must stack above its own scrim, otherwise the scrim both
+       dims the drawer and intercepts every click on it (mobile lockout). */
+    z-index: calc(var(--z-scrim) + 1);
     transform: translateX(-102%);
     transition: transform var(--dur-med) var(--ease-out);
     box-shadow: var(--shadow-3);
@@ -373,8 +374,32 @@ body {
   .menu-toggle { display: inline-flex; }
   .content { padding: var(--sp-4); padding-bottom: var(--sp-9); }
   .topbar { padding: var(--sp-2) var(--sp-3); }
-  .topbar__search { min-width: 0; }
-  .topbar__search .topbar__search-hint { display: none; }
+
+  /* Decluttered mobile topbar: sync status and theme switching live on the
+     Account & Sync page and in Settings, and the account button collapses to
+     the avatar only — all of which frees horizontal space for search. */
+  .topbar__sync,
+  .theme-btn,
+  .account-btn__name { display: none; }
+
+  /* With the sync/theme controls gone the search bar can breathe again:
+     the right group fills the row and search grows into the free space,
+     while min-width guarantees it never collapses to an unusable sliver. */
+  .topbar__right { flex: 1; }
+  .topbar__search {
+    flex: 1;
+    min-width: 6rem;
+    padding: 0 var(--sp-3);
+  }
+  .topbar__search .topbar__search-hint {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Keyboard hints are meaningless on touch layouts and the squeezed button
+     wraps them into an overflowing two-line blob; drop them entirely. */
+  .topbar__search kbd { display: none; }
 }
 
 @media (max-width: 40rem) {
@@ -382,6 +407,9 @@ body {
   .page-header__title h1 { font-size: var(--fs-xl); }
   .section { padding: var(--sp-4); }
   .breadcrumbs a { max-width: 6rem; }
+  /* Extra-narrow phones: shrink the search floor so the whole control row
+     always fits; the label ellipsizes before anything can overflow. */
+  .topbar__search { min-width: 4.5rem; }
 }
 
 @keyframes fade-in {
