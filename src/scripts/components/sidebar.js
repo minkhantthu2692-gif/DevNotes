@@ -104,16 +104,44 @@ export function mountSidebar(container) {
   // The sidebar intentionally has NO search entry: the header's search button
   // opens the same command palette (palette.js), and duplicated controls for
   // one target are removed by design.
+  const scrimEl = document.getElementById('sidebar-scrim');
+  scrimEl?.addEventListener('click', closeNavDrawer);
+
   routeStore.subscribe((state) => setActive(state.path));
   uiStore.subscribe((state) => {
     document.getElementById('app-shell')?.setAttribute('data-nav-open', String(state.navOpen));
-    const scrim = document.getElementById('sidebar-scrim');
-    if (scrim) scrim.hidden = !state.navOpen;
+    if (scrimEl) scrimEl.hidden = !state.navOpen;
+    syncDrawerFocus(state.navOpen);
+  });
+
+  // Bubble phase on purpose: dialogs/menus/palette call stopPropagation() on
+  // their Escape handling, so this fires only when no other overlay owns the key.
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !uiStore.get().navOpen) return;
+    closeNavDrawer();
   });
 
   bus.on('data:changed', () => refreshBadges());
   refreshBadges();
   setActive(routeStore.get().path);
+}
+
+/**
+ * Drawer focus management: hand focus into the drawer when it opens and back
+ * to the toggle when it closes, so keyboard/screen-reader users are never
+ * stranded behind the scrim. Programmatic focus must not scroll the page.
+ */
+function syncDrawerFocus(open) {
+  const drawer = document.getElementById('sidebar');
+  const toggle = document.querySelector('.menu-toggle');
+  if (open) {
+    drawer?.focus({ preventScroll: true });
+    return;
+  }
+  // Only reclaim focus when it would otherwise be lost with the hidden drawer.
+  if (drawer?.contains(document.activeElement)) {
+    toggle?.focus({ preventScroll: true });
+  }
 }
 
 /** Close the mobile drawer (called by scrim clicks / navigation). */

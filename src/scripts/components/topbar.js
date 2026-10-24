@@ -39,7 +39,7 @@ function renderThemeButton() {
   const theme = getPrefs().theme;
   if (!themeBtn) {
     themeBtn = h('button', {
-      class: 'icon-btn',
+      class: 'icon-btn theme-btn',
       type: 'button',
       on: { click: cycleTheme },
       attrs: { 'data-tooltip': 'Switch theme (light / dark / system)' },
@@ -132,11 +132,9 @@ export function mountTopbar(container) {
     type: 'button',
     attrs: { 'aria-label': 'Open navigation', 'aria-expanded': 'false' },
     on: {
-      click: () => {
-        const open = !uiStore.get().navOpen;
-        uiStore.set({ navOpen: open });
-        menuBtn.setAttribute('aria-expanded', String(open));
-      },
+      // The store is the single source of truth; the subscriber below keeps
+      // aria-expanded in sync no matter which path closes the drawer.
+      click: () => uiStore.set({ navOpen: !uiStore.get().navOpen }),
     },
   }, [icon('menu')]);
 
@@ -162,7 +160,7 @@ export function mountTopbar(container) {
     on: { click: () => openQuickCreate(createBtn) },
   }, [icon('plus')]);
 
-  const syncHost = h('span', { id: 'topbar-sync' });
+  const syncHost = h('span', { id: 'topbar-sync', class: 'topbar__sync' });
 
   const accountBtn = h('button', {
     class: 'icon-btn account-btn',
@@ -224,6 +222,10 @@ export function mountTopbar(container) {
   syncStore.subscribe(updateSyncPill);
   authStore.subscribe(() => { updateSyncPill(); renderAccount(); });
   bus.on('profile:changed', renderAccount);
+  uiStore.subscribe((state) => {
+    menuBtn.setAttribute('aria-expanded', String(!!state.navOpen));
+    menuBtn.setAttribute('aria-label', state.navOpen ? 'Close navigation' : 'Open navigation');
+  });
   updateSyncPill();
   updateBreadcrumbs([]);
   renderAccount();
