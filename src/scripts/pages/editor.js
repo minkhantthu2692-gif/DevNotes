@@ -29,6 +29,7 @@ import {
 import { renderMarkdown } from '../utils/markdown.js';
 import { hydrateCodeBlocks } from '../components/code-block.js';
 import { getPrefs, savePrefs } from '../features/settings/prefs.js';
+import { attachWritingToolbar } from '../features/ai/writing.js';
 import { LESSON_STATUSES, DIFFICULTIES, sanitizeUrl } from '../utils/validate.js';
 import { formatDateTime, formatRelative, countWords } from '../utils/format.js';
 
@@ -168,6 +169,9 @@ export default {
 
     function applyMode() {
       splitEl.dataset.mode = mode;
+      // The toolbar floats over the content field — hide/reposition it when
+      // the source pane is hidden.
+      writingToolbar.refresh();
     }
 
     const wrapBtn = h('button', {
@@ -854,6 +858,12 @@ export default {
       void save({ force: true });
     }, { allowInInput: true, description: 'Save lesson' });
 
+    // Contextual AI writing actions: appears on selection (hidden entirely
+    // when AI is off/unconfigured — no dead controls).
+    const writingToolbar = attachWritingToolbar(contentArea, {
+      getLessonTitle: () => titleInput.value.trim(),
+    });
+
     root.appendChild(shell);
     applyMode();
     void init().catch((err) => {
@@ -877,6 +887,7 @@ export default {
         disposed = true;
         scheduleSave.cancel();
         schedulePreview.cancel();
+        writingToolbar.destroy();
         root.removeEventListener('input', onFormInput);
         root.removeEventListener('change', onFormInput);
         offShortcut?.();

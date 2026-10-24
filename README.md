@@ -50,7 +50,7 @@ Burmese readers: [အပြည့်အဝ ဆက်တင်လမ်းညွ�
 - Email/password accounts, plus Google/GitHub OAuth once providers are configured
 - Profile: username and profile photo shown in the header, editable on the **Account** page — uploaded photos are cropped and stripped of metadata, and accounts signed up via OAuth get their username and photo from the provider (falling back to the email's local part and a generated initial-avatar)
 - **Account management** on **Account & Sync**: sign out, an export shortcut, **Reset user data** (typed `RESET`) which deletes everything uploaded to Supabase — the seven sync tables, your profile row and photo — plus this browser's copy, while the account and sign-in stay; and **Delete account** (typed `DELETE`) which removes the account and all of its data so the same email, Google or GitHub login can register again later (needs `0003_account.sql`; reports the real database error until it is applied)
-- AI assistant, AI-drafted flashcards (which always require your approval) and AI writing help in the editor — via your own Groq key (BYOK) or a server-side proxy
+- AI assistant with **streaming replies** and **locally-persisted conversations** (create / rename / reopen / delete — chat history never syncs), AI-drafted flashcards (which always require your approval), and a contextual **AI writing toolbar** in the editor (Improve, Rewrite, Explain, Expand, Shorten, Fix grammar, Translate EN↔MY) with preview-before-apply — via your own Groq key (BYOK) or a server-side proxy
 
 ## Browser requirements
 
@@ -122,6 +122,7 @@ supabase/
 tests/
   unit/                  Node test-runner suite (fake-indexeddb)
   browser/run.mjs         Playwright smoke test against a local static server
+  browser/ai-mock.mjs     AI features vs a mocked Groq API (no key needed)
   browser/stylecheck.mjs  diagnostic: verify stylesheets load and apply
 ```
 
@@ -194,7 +195,7 @@ supabase functions deploy ai-proxy
 
 Then set `AI.edgeFunctionUrl` in `config.js` to `https://<ref>.supabase.co/functions/v1/ai-proxy`. The function authenticates each request with `auth.getUser()` (a signed-in session is required) and rate-limits per user. Details and error codes: [`supabase/README.md`](supabase/README.md).
 
-Model IDs drift over time — the default is `llama-3.3-70b-versatile`; **Settings → AI** offers presets, a custom model field and a “Load available models” action. Rate limits, invalid models, timeouts and network failures produce specific, recoverable error messages. AI drafts are never applied silently: flashcard drafts wait for your approval, and assistant output is always shown for confirmation.
+Model IDs drift over time — the default is `llama-3.3-70b-versatile`; **Settings → AI** offers presets, a custom model field and a “Load available models” action. Rate limits, invalid models, timeouts and network failures produce specific, recoverable error messages. Chat replies stream in token by token (Stop keeps the partial answer; an interrupted stream shows what arrived next to a Retry) and token usage is shown when the API reports it. Conversations live in this browser's IndexedDB only — they are never synced or uploaded. AI drafts are never applied silently: flashcard drafts wait for your approval, assistant output is always shown for confirmation, and the editor's writing toolbar only replaces selected text after you click **Apply**.
 
 ## How synchronization works
 
@@ -217,6 +218,7 @@ Model IDs drift over time — the default is `llama-3.3-70b-versatile`; **Settin
 Settings → *Account & data*:
 
 - **Export** — a single versioned JSON file (`schemaVersion: 1`) with all entities and a manifest, or a ZIP containing that JSON plus per-lesson/per-snippet Markdown mirrors and a `readme.txt`. Preferences are included in JSON, excluded from ZIP.
+- **Not included** — AI chat conversations are local-only by design (never synced) and are intentionally left out of backups; manage them from the AI Assistant's conversation menu.
 - **Import** — the file is size-checked, parsed and validated before anything is written; a preview shows counts per entity, which records are new vs already present, skipped/invalid records and validation errors. Then you choose:
   - **Merge**: adds new records only; existing IDs are never overwritten, duplicate titles get unique slugs.
   - **Replace**: clears the content stores (after a typed `REPLACE` confirmation) and applies the backup's preferences.
@@ -234,18 +236,20 @@ Account & Sync → *Account management* offers two cloud-aware actions. **Reset 
 
 ## Testing
 
-Both suites were executed against this codebase:
+All suites were executed against this codebase:
 
 ```sh
-npm test               # unit suite: 109 tests, 8 files → 109 pass / 0 fail
-npm run test:browser   # browser smoke: 12 steps       → 12 pass / 0 fail
+npm test               # unit suite: 127 tests, 10 files → 127 pass / 0 fail
+npm run test:browser   # browser smoke: 12 steps        → 12 pass / 0 fail
+npm run test:ai        # AI features vs mocked Groq: 15 steps → 15 pass / 0 fail
 node tests/browser/stylecheck.mjs   # diagnose CSS loading on any deployment
 
 # Run the same smoke steps against a deployed copy instead of a local server:
 SMOKE_ORIGIN=https://<user>.github.io/DevNotes npm run test:browser
 ```
 
-- **Unit** (`node --test` + `fake-indexeddb`): validation/normalization (including backup validation rules), search parsing/scoring/flags/highlighting, error classification and backoff, the sync queue (coalescing, claim, failure classes, exhaustion, retry, discard, suspension), repositories (CRUD, revisions, activity coalescing, trash lifecycle, flashcard approval/scheduling, taxonomy dedupe), and import/export (size/parse guards, diffing, merge/replace semantics). `localStorage` is polyfilled in `tests/unit/helpers/env.js`.
+- **Unit** (`node --test` + `fake-indexeddb`): validation/normalization (including backup validation rules), search parsing/scoring/flags/highlighting, error classification and backoff, the sync queue (coalescing, claim, failure classes, exhaustion, retry, discard, suspension), repositories (CRUD, revisions, activity coalescing, trash lifecycle, flashcard approval/scheduling, taxonomy dedupe), the local-only conversations repository (CRUD, timestamps, bounded transcripts, sync/activity isolation), SSE stream parsing (chunk-split reassembly, BYOK + proxy frame shapes, usage normalization), and import/export (size/parse guards, diffing, merge/replace semantics). `localStorage` is polyfilled in `tests/unit/helpers/env.js`.
+- **AI mock** (`npm run test:ai`, same Playwright harness): installs a `window.fetch` mock that impersonates Groq, then verifies streaming render, token-usage display, Stop keeping the partial reply, Regenerate, conversation create/rename/reopen/delete, persistence across reload, attachment restore, flashcard draft validation with the unapproved flag, and the editor toolbar's preview → Cancel/Apply flow — all without an API key.
 - **Browser** (`playwright-core` + your installed Chrome or Edge — no browser download): serves the repo over HTTP, then verifies boot, **design-system styles actually loading and applying** (tokens resolve, grid layout active — catches the "app renders unstyled" failure class), dashboard, empty library, lesson creation with autosave and URL swap, **persistence across reload**, settings rendering, **dialog accessibility** (keyboard open, `aria-modal`, Escape closes, focus restored to the trigger), **every route mounting without runtime errors**, **service-worker precache + a full boot while offline**, and zero uncaught page errors. Set `CHROME_PATH` if your browser lives somewhere non-standard. With `SMOKE_ORIGIN` set the local server is skipped and the steps run against that URL — use it to verify a deployment (this project's GitHub Pages copy was validated this way). `tests/browser/stylecheck.mjs` is a standalone diagnostic that reports every CSS response a browser sees plus computed-style probes, for debugging unstyled renders.
 
 Tests requiring real Supabase/Groq credentials (live RLS policies, live OAuth, real proxy rate limits) cannot run offline and are **not** included; the migration's RLS policies should be verified against your project (Supabase provides SQL tests in the dashboard). The local suites require no network access; only `SMOKE_ORIGIN` runs do.

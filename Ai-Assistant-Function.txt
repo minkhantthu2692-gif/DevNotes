@@ -1,0 +1,290 @@
+DevNotes — AI Assistant လုပ်ဆောင်ချက်များ စာရင်း (Ai-Assistant-Function)
+================================================================================
+ဖန်တီးသည့်ရက်: 2026-10-24
+ပြင်ဆင်သည့်ရက်: 2026-10-24 — Persistent chat, streaming, editor AI
+writing toolbar တို့ ထည့်ပြီးနောက် ကုဒ်အတိုင်း ပြန်လည်စစ်ဆးခြင်း။
+ရည်ရွယ်ချက်: လက်ရှိ ပေါင်းစပ်ထားပြီးသော AI Assistant ၏ စွမ်းရည်များကို
+စစ်ဆေးချက်ဖြင့် ဖော်ပြထားခြင်း — ထည့်သင့်သော / ဖယ်ရှားသင့်သော
+အင်္ဂါရပ်များ ဆုံးဖြတ်ရန်အတွက် အခြေခံအဖြစ် အသုံးပြုရန်။
+
+ဤစာရင်းကို README မဟုတ်ဘဲ ကုဒ်ကိုတိုင်း ဖတ်ပြီး ရေးထားခြင်းဖြစ်သည်။
+ကိုးကားထားသော ဖိုင်များ-
+  - src/scripts/features/ai/ai-service.js
+  - src/scripts/features/ai/stream.js  (SSE parser — unit test ဖြင့်)
+  - src/scripts/features/ai/writing.js  (editor AI toolbar)
+  - src/scripts/db/repositories/conversations.js
+  - src/scripts/db/migrations/002-conversations.js  (local-only store)
+  - src/scripts/pages/assistant.js
+  - src/scripts/pages/review.js
+  - src/scripts/pages/editor.js
+  - src/scripts/pages/settings.js  (AI အပိုင်း)
+  - src/scripts/features/settings/prefs.js  (AI မူလတန်းများ)
+  - supabase/functions/ai-proxy/index.ts
+  - supabase/migrations/  (AI နှင့် မသက်ဆိုင်ပါ)
+  - tests/unit/conversations.test.js, tests/unit/ai-stream.test.js
+  - tests/browser/ai-mock.mjs  (mocked Groq ဖြင့် e2e — key မလို)
+
+--------------------------------------------------------------------------------
+1. အခြေခံအချက် — AI သည် မဖြစ်မနေ မဟုတ်ပါ (AI is optional)
+--------------------------------------------------------------------------------
+ - AI မပါလည်း မှတ်စု၊ သင်ခန်းစာ၊ flashcard စသည့် အဓိကလုပ်ဆောင်ချက်အားလုံး
+   offline / local တွင် ပုံမှန်အလုပ်လုပ်သည်။
+ - AI မပြင်ဆင်ရသေးပါက AI Assistant စာမျက်နှာက "AI is not set up" ဟူသော
+   ရှင်းလင်းချက်နှင့် Settings → AI သို့ သွားရန် ခလုတ်သာ ပြပြီး၊
+   မလုပ်နိုင်သော (dead) controls များ မပြပါ။
+ - ပိတ်ထား/ဖွင့်ထားနိုင်သည်- Settings → AI → "Enable AI features"
+   (မူလတန်း: ဖွင့်ထားသည် / true)
+
+--------------------------------------------------------------------------------
+2. ချိတ်ဆက်မှု နည်းလမ်း ၂ မျိုး (two connection modes)
+--------------------------------------------------------------------------------
+က) BYOK (Bring Your Own Key)
+   - Groq API key ကို ကိုယ်ပိုင် browser localStorage တွင် သိမ်းထားပြီး
+     browser မှ တိုက်ရိုက် https://api.groq.com သို့ ခေါ်ဆိုသည်။
+   - Key ကို Settings → AI တွင် သိမ်းနိုင်/ဖယ်ရှားနိုင်သည် (password field၊
+     သိမ်းပြီးပါက နောက်ဆံတွင် ၄ လုံးသာ ပြသည်)။
+   - ပွင့်လင်းစွာ သတိပေးထားသည်- browser တွင် သိမ်းထားသော key ကို
+     ဤ browser profile ကို ဝင်ရောက်နိုင်သူများထံမှ အပြည့်အဝ
+     ကာကွယ်ပေးနိုင်ခြင်း မဟုတ်ပါ။
+
+ခ) Proxy (Supabase Edge Function — ai-proxy)
+   - မျှဝေသော GROQ_API_KEY ကို server-side secret အဖြစ်သာ သိမ်းထားပြီး
+     browser သို့ ဘယ်တော့မှ မပို့ပါ။
+   - Supabase user JWT (sign-in ပြီးသူသာ) လိုအပ်သည် — anon ခေါ်ဆိုမှုအားလုံး
+     401 ဖြင့် ပြန်ပိတ်သည်။
+   - Server ဘက် ကန့်သတ်ချက်များ:
+       * တစ်ဦးလျှင် ၆၀ စက္ကန့်လျှင် ခေါ်ဆိုမှု ၃၀ အထိ (rate limit, default)
+       * model allowlist (မူလ: llama-3.3-70b-versatile) — allowlist မပါသော
+         model ဖြင့် တောင်းဆိုပါက ငြင်းပယ်သည်
+       * upstream timeout: one-shot 30 စက္ကန့် (headers အထိ); streaming
+         အတွက် chunk အကြား idle 30 စက္ကန့် + စုစုပေါင်း 120 စက္ကန့်
+       * message ≤ 40 ခု၊ စုစုပေါင်း ≤ 120,000 စာလုံး
+       * temperature ≤ 2၊ max_tokens ≤ 4096
+       * response ကို content/model/usage အစိတ်အပိုင်း ၃ ခုသာ ပြန်ပေးသည်
+         (tools/user စသည်တို့ လိုက်ပို့၍ မရပါ)။ တစ်ခုတည်းသော transport
+         switch မှာ "stream": true (boolean အဖြစ် validate) — streaming အခါ
+         text/event-stream အဖြစ် {delta} / {usage, model} / {error} /
+         [DONE] frame များကို ကိုယ်တိုင် တည်ဆောက်ပြီး ပြန်ပို့သည်
+         (upstream payload အကြောင်းအရာ တိုက်ရိုက် မပို့ပါ)။
+   - Error code များ: unauthorized, invalid_request, not_configured,
+     configuration_error, rate_limited, upstream_rate_limited, invalid_model,
+     upstream_error, empty_response, timeout, method_not_allowed
+
+Mode ရွေးချယ်ပုံ (ai-service.js → getAiMode):
+   AI ပိတ်ထားပါက off → edgeFunctionUrl + Supabase ရှိပါက proxy →
+   key ရှိပါက byok → မဟုတ်ပါက off
+
+--------------------------------------------------------------------------------
+3. AI Assistant စာမျက်နှာ (/assistant) လုပ်ဆောင်ချက်များ
+--------------------------------------------------------------------------------
+ - စကားပြောဆွေးနွေးမှု (chat) — user နှင့် assistant မက်ဆေ့များ အဆင့်ဆင့် ပြသသည်။
+ - System persona: "DevNotes, a concise programming tutor" — အတိုတုတ် ဖြေကြားပြီး
+   Markdown + language tag ပါသော code block များ သုံးရန် ညွှန်ကြားထားသည်။
+ - ဖြေကြားသည့် ဘာသာစကား: Settings → AI → Output language
+   (English / Burmese မြန်မာ) — default: English
+ - ဝင်ရောက်နိုင်သော သင်ခန်းစာ (lesson attachment):
+       * အများဆုံး ၂ ခုသာ (MAX_ATTACHMENTS = 2)
+       * ရှာဖွေနိုင်သော picker dialog (ခေါင်းစဉ်ဖြင့် ရှာနိုင်)
+       * chip များဖြင့် ပြပြီး detach လုပ်နိုင်သည်
+       * ပို့လိုက်သော context = ခေါင်းစဉ် + summary + content အထိ
+         စာလုံး ၈,၀၀၀ အထိ (ကျော်လွန်ပါက "…[truncated]" ဟု ဖြတ်ပြ)
+       * တစ်ခုတည်းသော စည်းမျဉ်းဖြင့်သာ ပို့သည် — မှတ်စုအပြည့်အဝ
+         (whole library) ကို AI ထံ ဘယ်တော့မှ မပို့ပါ
+       * ပိတ်ထားပါက (Settings → AI → Lesson context = off) attachment မရနိုင်ပါ
+       * lesson ခေါင်းစဉ် ပြောင်းလဲပါက auto-refresh၊ trash ထဲ ရောက်ပါက
+         attachment အလိုအလျောက် ဖယ်ပေးသည်
+ - မက်ဆေ့ ပို့ခြင်း:
+       * Enter ဖြင့် ပို့၊ Shift+Enter ဖြင့် စာကြောင်းအသစ်
+       * အဖြေများ streaming ဝင်လာသည် — token အဆင့်ဆင့် ပေါ်ပြီး
+         100ms လျှင် တစ်ကြိမ် Markdown ပြန်ဆွဲသည် (streaming စဉ်
+         blinking caret ပါ)၊ reply ပြီးမှ sanitized HTML အပြည့်အဝ။
+         aria-live ကို streaming စဉ် ပိတ်ထားပြီးပြီးမှ ပြန်ဖွင့်သည်
+         (screen reader ကို token တိုင်းနှင့် မဆွဲပါ)။
+       * ပို့နေစဉ် Stop ခလုတ်ဖြင့် ရပ်တန့်နိုင်သည် (request abort) —
+         ရောက်ပြီးသား partial စာသားကို မပျက်ဘဲ render + history ထဲ
+         သိမ်းပြီး meta တွင် "Stopped" ဟု ဖော်ပြသည်
+       * မအောင်မြင်ပါက error bubble + Retry ခလုတ် (နောက်ဆုံး မအောင်မြင်သေးသော
+         bubble တွင်သာ ရနိုင် — ရှေ့ဟောင်း retry များက history ထပ်မံ
+         မဖြည့်စေရန် ပိတ်ထားသည်)
+       * ပို့မှုကန့်သတ်ချက်: history မှ နောက်ဆုံး ၃၀ ခု + system ၁ ခု +
+         attachment ၂ ခု (စုစုပေါင်း service ဘက် limit = ၄၀ ခု)
+ - Assistant အဖြေကို sanitized Markdown အဖြစ် ပြသသည်
+   (DOMPurify ဖြင့် သန့်စင်)၊ code block များကို highlight + copy button ဖြင့်
+   ပြင်ဆင်ပေးသည်။
+ - အဖြေ bubble အောက် meta line — relative time + API ပေးပို့ပါက
+   token usage (ဥပမာ "50 in / 20 out tokens") + "Stopped" marker။
+ - Regenerate — နောက်ဆုံးအဖြေကို ဖျက်ပြီး မေးခွန်းအတိုင်း ထပ်မံမေးသည်
+   (user မက်ဆေ့ ထပ်မထည့်ပါ)။ အဖြေတစ်ခုတည်း၏ action row တွင်သာ
+   ပေါ်သည်။
+ - ကွန်နက်ရှင် ပြတ်/timeout ဖြစ်ပါက — partial ရှိပါက partial ကို ပြထားပြီး
+   error + Retry ပေးသည် (partial ကို history ထဲ မသိမ်းပါ — Retry က
+   reply အသစ် ပြန်ထုတ်ပေးသည်)။ partial မရှိပါက error bubble + Retry ။
+ - အဖြေတိုင်းတွင် လုပ်ဆောင်နိုင်သည်များ:
+       * Copy — အဖြေတစ်ခုလုံး clipboard သို့ ကူးယူသည်
+       * Save as new lesson — confirmation dialog အတည်ပြုပြီးမှ
+         သင်ခန်းစာအသစ် တစ်ခု ဖန်တီးသည်။ ရှိပြီးသား မှတ်စုကို
+         ဘယ်တော့မှ အစားမထိုးပါ။ ခေါင်းစဉ် = အဖြေ၏ ပထမဆုံးစာကြောင်း
+         (အများဆုံး စာလုံး ၈၀)၊ tag = ai-saved
+ - သင်ခန်းစာ attach လုပ်ပါက အသင့်ရှိသော quick actions ၄ ခု ပေါ်လာသည်-
+       * Explain this lesson — ရိုးရှင်းစွာ ရှင်းပြခိုင်း (နမူနာတစ်ခုပါ)
+       * Summarize it — အချက် ၅ ခုအတွင်း အကျဉ်းချုပ်
+       * Quiz me (5 questions) — မေးခွန်း ၅ ခု၊ တစ်ခုချင်းစီ မေးပြီး အဖြေစောင်
+       * Suggest flashcards — ဤ lesson မှ flashcard draft များ ဖန်တီးပေးသည်
+ - Clear chat — confirmation ပြီးမှ လက်ရှိ conversation ၏ message အားလုံး
+   ကို ဖျက်သည် (conversation record ကျန်ရစ်သည်)။ ဘာမှ မရှိပါက
+   "Nothing to clear yet" ပြသည်။
+ - New chat — draft conversation အသစ် စတင်သည်။ ပထမမက်ဆေ့ ပို့မှ IndexedDB
+   တွင် record အဖြစ် သိမ်းပြီး ခေါင်းစဉ် = မက်ဆေ့၏ ပထမ ၆၀ စာလုံး
+   (space တွေ ချုံ့)။
+ - Conversation sidebar (ဘယ်ဘက်ရှိ panel) — ဆွေးနွေးမှု အားလုံး စာရင်းပြ:
+       * နှိပ်၍ reopen — message အပြည့်အဝ + attachment chip ပြန်ပေါ်သည်
+       * ⋯ menu → Rename (promptDialog) / Delete (confirmDialog + permanent)
+       * active row highlight + message count + last-opened relative time
+       * busy စဉ် ကူးသွား/ဖျက်/ပြန်နှိပ်ခြင်းကို တားပြီး ရှင်းလင်းသော
+         toast ဖြင့် ရှင်းပြသည်
+       * desktop တွင် 16rem sticky column, mobile တွင် chat အောက် stack
+ - အခြေအနေပြမှုများ — conversation မရှိပါက "Start a conversation" empty
+   state, sidebar တွင် "No conversations yet.", boot ချိန် skeleton,
+   load မအောင်မြင်ပါက error state + Reload။
+ - မှတ်ပုံတင်ခြင်း (local-first): message တိုင်းကို IndexedDB
+   `conversations` store (migration 002) တွင် သိမ်းသည် — role, content,
+   timestamp, attachment reference (lessonId + title), usage, model,
+   note ("stopped") အပါအဝင်။ တစ် conversation လျှင် message ၄၀၀ အထိ
+   (ကျော်လွန်ပါက အဟောင်းဆုံး ဖယ်)၊ conversation ၂၀၀ အထိ။
+   ** local တွင်သာ — sync queue / activity log ထဲ ဘယ်တော့မှ မဝင်ပါ၊
+   Supabase သို့ ဘယ်တော့မှ မပို့ပါ** (unit test ဖြင့် တိုက်ရိုက် စစ်ထားသည်)။
+   UI hint — "Stored locally on this device — chat history is never synced
+   to the cloud."
+   reload ပြန်လုပ်ပါက နောက်ဆုံးဖွင့်ထားသော conversation ကို အလိုအလျောက်
+   ပြန်ဖွင့်ပေးသည်။ attachment ပျောက်/trash ရောက်ပါက reference ကို
+   ထိန်းထားပြီး context ပို့ခြင်းသာ ရပ်သည်။
+
+--------------------------------------------------------------------------------
+4. AI Flashcard draft ဖန်တီးခြင်း (generateCardDrafts)
+--------------------------------------------------------------------------------
+ - ဝင်ရောက်နိုင်သောနေရာ ၃ ခု-
+       1) AI Assistant → "Suggest flashcards" (lesson attach လုပ်ထားမှသာ)
+       2) Review page → AI draft dialog (lesson ရွေးချယ်ရန် picker ပါ)
+       3) Editor → "Draft cards from this lesson"
+          (flashcard ၀ ခုသာရှိပြီး tag ရှိသော lesson တွင်သာ ပေါ်သည်)
+ - JSON mode (response_format: json_object) ဖြင့် strict JSON တောင်းဆိုသည်။
+ - temperature 0.3၊ တစ်ကြိမ်လျှင် draft ၆ ခု တောင်းဆိုပြီး
+   အများဆုံး ၁၂ ခုအထိ သိမ်းသည်။
+ - code fence ပါ/မပါ၊ array ကို object ထဲ ဝှက်ထားပါစဦး ဖြေရှင်းနိုင်သည်
+   (loose JSON parser)။
+ - ဖန်တီးထားသော card များကို source:'ai' + approved:false ဖြင့် သိမ်းသည် —
+   ဆိုလို့ user က Review → Drafts တွင် approve မလုပ်မချင်း study queue ထဲ
+   ဘယ်တော့မှ မဝင်ပါ။
+ - lesson ၏ tag များ (ပထမ ၃ ခု) နှင့် lessonId ကို ဆက်သွယ်ထားသည်။
+ - မမှန်ကန်သော card (front/back ကွက်လပ်) များကို ကျော်ပြီး မှန်သည်များကို
+   သိမ်းသည်; အဖြေအသုံးမဝင်ပါက "try again" error ပြသသည်။
+
+--------------------------------------------------------------------------------
+5. Settings → AI တွင် ပြင်ဆင်နိုင်သည်များ
+--------------------------------------------------------------------------------
+ - Enable AI features — ခလုတ် (default: on)
+ - Model — preset ၄ ခု (Llama 3.3 70B, Llama 3.1 8B, GPT-OSS 120B, GPT-OSS 20B)
+   + မူလ model = llama-3.3-70b-versatile
+ - Custom model ID — Groq model id ကိုယ်တိုင် ထည့်၍ "Use this model"
+ - Temperature — slider 0 မှ 1 (default 0.4)
+ - Max response tokens — 1024 / 2048 / 4096 (default 2048)
+ - Output language — English / Burmese (မြန်မာ) (default: English)
+ - Translate direction — English → Myanmar / Myanmar → English
+   (default: en-my) — Editor ၏ AI toolbar တွင်ရှိ Translate action က
+   ဤ setting ကို သုံးသည် (ယခင် dead pref ဖြစ်နေရာက အသက်ဝင်ပြီ)
+ - Lesson context — attachment ခွင့်ပြု/ပိတ် (default: on)
+ - Groq API key (BYOK) — Save key / Remove (ဒေတာမျှဝေမှု မဟုတ်ပါ၊ localStorage)
+ - "How requests travel" — proxy သို့မဟုတ် BYOK ဘယ်လိုသွားကြောင်း ရှင်းလင်းစွာ
+   ဖော်ပြသည် (BYOK ၏ အားနည်းချက်ကိုပါ ပွင့်လင်းစွာ ဝန်ခံထားသည်)
+ - Load available models — Groq API မှ model စာရင်း ယူပြီး select ထဲ ထည့်သည်
+   (BYOK mode တွင်သာ; proxy mode တွင် ပိတ်ထားသည်)
+ - Connection test — "Reply with exactly the word OK" (max_tokens 8) ပို့ပြီး
+   တုံ့ပြန်မှု + model ကို ပြသသည်
+ - status line (aria-live) — setup အခြေအနေကို ရှင်းလင်းစွာ ဖော်ပြသည်
+
+--------------------------------------------------------------------------------
+6. ဘေးကင်းရေးနှင့် အမှားကိုင်တွယ်မှု (safety & error handling)
+--------------------------------------------------------------------------------
+ - AI output ကို ယုံကြည်စိတ်ချရသော ဒေတာအဖြစ် မသတ်မှတ်ပါ —
+   Markdown ကို DOMPurify ဖြင့် သန့်စင်ပြီးမှသာ render လုပ်သည်။
+ - AI အဖြေကို ရှိပြီးသား မှတ်စုထဲ အလိုအလျောက် ထည့်/အစားထိုး မလုပ်ပါ။
+   ရေးသားသိမ်းဆည်းနိုင်သည့် တစ်ခုတည်းသောလမ်းကြောင်းမှာ
+   "Save as new lesson" (confirmation လို) ဖြစ်သည်။
+ - Context ပို့ခြင်း — user ကိုယ်တိုင် ရွေးထားသော lesson ၂ ခု (စာလုံး ၈,၀၀၀
+   အထိ) သာ; whole library မပို့ပါ။
+ - Client အမှားပြောင်းခြင်း (ai-service.js → friendlyHttpError):
+       * 401/403 → key ငြင်းပယ်ခံရ (Settings → AI တွင် ပြန်စစ်)
+       * 404 → model မရရှိတော့ပါ (model ပြောင်းရန်)
+       * 429 → rate limit (ခဏစောင့်; retryable)
+       * 5xx → server ပြဿနာ (retryable)
+       * timeout → one-shot: client default 45 စက္ကန့် (config မှ ပြင်နိုင်)
+         + hard cap 120 စက္ကန့်; streaming: chunk အကြား idle timeout
+         (15–60s အတွင်း, မူလ 45s) + စုစုပေါင်း 120 စက္ကန့်;
+         proxy streaming: idle 30s + total 120 စက္ကန့်
+       * ကွက်လပ် response → "empty response" (retryable)
+       * network → "Could not reach Groq" (retryable)
+       * streaming ကြားကနေ ပြတ်ပါက — partial ရှိပါက "connection
+         interrupted" + Retry ဖြင့် partial ကို မပျက်ဘဲ ပြပြီး
+         err.partial ထဲ သိမ်းထားသည်; proxy ဘက်က in-band
+         {error} frame ကိုလည်း client က mapped AppError အဖြစ်
+         ပြောင်းသည်
+ - Proxy ဘက်မှ key ကို log/echo လုံးဝ မလုပ်ပါ; error များကို အမျိုးအစား
+   ခွဲပြီး user-friendly message အဖြစ်သာ ပြသသည်။
+ - တစ်ခုနှင့်တစ်ခု ဆက်တိုက် မဖြစ်မနေ စောင့်ရသည် — busy စဉ် attachment,
+   quick action, send ခလုတ်များ ပိတ်ထားသည်။
+ - Editor AI writing toolbar (features/ai/writing.js) —
+       * selection ရှိမှသာ ပေါ်သည်; AI off/unconfigured ဆိုပါက လုံးဝ
+         မပေါ်ပါ (dead control မရှိ)
+       * လုပ်ဆောင်ချက် ၇ ခု — Improve Writing, Rewrite, Explain, Expand,
+         Shorten, Fix grammar, Translate (EN↔MY, Settings ၏ direction)
+       * suggestion ကို dialog ထဲ preview (Suggested textarea + Original)
+         ပြပြီးမှ Apply — Cancel/Escape က ဘာမှ မပြောင်းပါ။
+         selection ပြောင်းသွားပါက apply ကို ငြင်းပယ်ပြီး warning ပြသ
+         သည် (apply ပြီးမှသာ autosave + preview ပြန်တွက်သည်)
+       * selection ≤ 8,000 စာလုံး (AI.maxContextChars); ကျော်ပါက toast
+         ဖြင့် တားသည်။ ပို့မှု system prompt က code block တွေ မပြောင်းဖို့
+         + original ဘာသာစကားအတိုင်းသာ ဖြေဖို့ တားမြစ်ထားသည်
+
+--------------------------------------------------------------------------------
+7. ၂၀၂၆-၁၀-၂၄ enhancement ပြီးနောက် အခြေအနေ
+   (ဖြေရှင်းပြီးသည်များ + ကျန်ရှိနေသော အကန့်အသတ်များ)
+--------------------------------------------------------------------------------
+ ဖြေရှင်းပြီး (ယခင် မှတ်ချက် (က)–(င)):
+   + Editor AI writing toolbar — Improve / Rewrite / Explain / Expand /
+     Shorten / Fix grammar / Translate (EN↔MY) ၇ ခု; selection ရှိမှ
+     floating toolbar ပေါ်ပြီး preview dialog ဖြင့်သာ apply လုပ်သည်။
+     → README ၏ "AI writing help in the editor" ယခု မှန်ကန်ပြီ။
+   + translateDirection pref အသက်ဝင်ပြီ — Settings → AI → Translate
+     direction row + toolbar ၏ Translate hint တွင် ပေါ်သည်။
+   + Streaming — client (BYOK + proxy) နှစ်ခုလုံး SSE ဖတ်ပြီး token
+     အဆင့်ဆင့် ပြသသည်; proxy က normalized frame relay လုပ်သည်
+     (JWT / rate limit / model allowlist / payload limit အားလုံး stream
+     မစတင်မီ အတိုင်း ဆက်လက်အာမခံ)။ Stop က partial ကို မဖျက်ဘဲ သိမ်းသည်။
+   + Chat history → IndexedDB (local-only) + conversation sidebar
+     (create / rename / reopen / delete)။ sync queue / activity / backup
+     ထဲ ဘယ်တော့မှ မဝင်ပါ (unit test ဖြင့် စစ်ထားသည်)။
+   + Token usage UI တွင် ပြသပြီ (API ပေးပါက message meta တွင်)။
+   + Regenerate — နောက်ဆုံးအဖြေကို အသစ်ပြန်ထုတ်သည်။
+   + Empty/loading/error states — "Start a conversation",
+     "No conversations yet.", skeleton, boot error + Reload စသည်။
+   - စမ်းသပ်မှု — unit 127 (conversations + SSE parser အသစ်), smoke 12/12,
+     mocked-Groq e2e 15/15 (npm run test:ai) — အားလုံး အောင်မြင်သည်။
+
+ ကျန်ရှိနေသော / သိထားရမည့် အကန့်အသတ်များ:
+ (စ) "Load available models" သည် BYOK mode တွင်သာ အလုပ်လုပ်သည်။
+ (ဆ) AI သည် local မှတ်စုအားလုံးကို ရှာ/ဖတ်/အကြံပေးနိုင်ခြင်း မရှိပါ —
+     attach လုပ်ထားသော lesson ၂ ခုအတွင်းသာ (ဒါက ရည်ရွယ်ချက်အတိုင်း)။
+ (ဇ) Local / offline model မပံ့ပိုးပါ — Groq (cloud) သို့သာ ချိတ်ဆက်သည်။
+ (ဠ) Conversation history ကို backup/export (JSON/ZIP) ထဲ ထည့်မထားပါ —
+     local-only အဖြစ် ရည်ရွယ်ချက်အရ ချန်ထားခြင်း (export လုပ်၍ မရ)။
+ (၄) Proxy streaming ကို live စမ်းရန် deployment + GROQ_API_KEY လို —
+     လက်ရှိ unit test (SSE parser) + mocked-Groq browser test ဖြင့် စစ်ထား
+     သည် (deno check / real API call မလုပ်နိုင်သေးပါ)။
+ (၅) Stream ကြားက ပြတ်ပါက partial ကို screen ပေါ်တွင်သာ ပြပြီး history
+     ထဲ မသိမ်းပါ (Stop ဖြင့်ရပ်သော partial မှ သိမ်းသည်)။
+ (၆) Editor ၏ Explain action က selection ကို ရှင်းပြစာသားဖြင့် အစားထိုး
+     နိုင် — preview တွင် original ပါသဖြင့် Cancel / Copy လမ်းကြောင်း
+     ရွေးနိုင်သည် (apply သာ နှိပ်ပါက မှ ပြောင်းသည်)။
+ (၇) Streaming Markdown re-render ကို 100ms throttle လုပ်ထားသည် —
+     အလွန်ကြီးမားသော reply တွင် နောက်ဆုံး frame အထိ အနည်းငယ် ကြာ
+     နိုင်သည် (final render အမြဲ တိကျသည်)။

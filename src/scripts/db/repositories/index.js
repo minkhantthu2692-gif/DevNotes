@@ -10,6 +10,7 @@ export { flashcardsRepo } from './flashcards.js';
 export { getPref, setPrefs, getAllPrefs, resetPrefs, PREFS_STORE_KEY } from './preferences.js';
 export { activityLog, revisions } from './history.js';
 export { fontsRepo, MAX_FONT_BYTES } from './fonts.js';
+export { conversationsRepo } from './conversations.js';
 export { getSnapshot, invalidateSnapshot } from '../snapshot.js';
 
 import { readAll, estimateStorage } from '../database.js';

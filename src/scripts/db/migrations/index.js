@@ -5,8 +5,9 @@
  */
 
 import { migration001 } from './001-initial.js';
+import { migration002 } from './002-conversations.js';
 
 export const MIGRATIONS = [
   migration001,
-  // migration002: …,
+  migration002,
 ].sort((a, b) => a.version - b.version);

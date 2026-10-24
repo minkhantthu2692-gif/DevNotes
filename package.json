@@ -8,6 +8,7 @@
   "scripts": {
     "test": "node --test \"tests/unit/*.test.js\"",
     "test:browser": "node tests/browser/run.mjs",
+    "test:ai": "node tests/browser/ai-mock.mjs",
     "serve": "npx --yes serve . -l 4173",
     "icons": "node tools/make-icons.mjs"
   },

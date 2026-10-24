@@ -812,7 +812,7 @@ export default {
               // Hidden picker lives here so it is inside the document (a
               // detached input's click() does not open the chooser).
               fileInput,
-              h('div', { class: 'field__hint', text: 'PNG, JPEG, WebP, GIF or AVIF · up to 10 MB' }),
+              h('div', { class: 'field__hint', text: 'PNG, JPEG and GIF · up to 10 MB' }),
             ]),
           ]),
           h('div', { class: 'stack stack--sm' }, [

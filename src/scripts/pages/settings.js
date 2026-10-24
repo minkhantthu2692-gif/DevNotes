@@ -649,6 +649,11 @@ async function buildAi({ update, whenDisposed }) {
             { value: 'en', label: 'English' },
             { value: 'my', label: 'Burmese (မြန်မာ)' },
           ], prefs.aiOutputLanguage, (value) => void update({ aiOutputLanguage: value }), { ariaLabel: 'Output language' })),
+        settingRow('Translate direction', 'Used by Translate in the editor\u2019s AI writing toolbar.',
+          selectControl([
+            { value: 'en-my', label: 'English \u2192 Myanmar' },
+            { value: 'my-en', label: 'Myanmar \u2192 English' },
+          ], prefs.translateDirection === 'my-en' ? 'my-en' : 'en-my', (value) => void update({ translateDirection: value }), { ariaLabel: 'Translate direction' })),
         settingRow('Lesson context', 'Allow the assistant page to attach the open lesson as context.',
           toggleControl(Boolean(prefs.aiContextEnabled), (value) => void update({ aiContextEnabled: value }))),
       ]),

@@ -209,6 +209,30 @@
 .editor-textarea[data-wrap="off"] { white-space: pre; overflow-wrap: normal; overflow-x: auto; }
 .editor-textarea[data-wrap="on"] { white-space: pre-wrap; overflow-wrap: anywhere; }
 
+/* Contextual AI writing toolbar — floats over the top-right of the content
+   field while a selection exists (features/ai/writing.js). Anchored to the
+   .field wrapper, which carries position: relative. */
+.ai-toolbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-1);
+  max-width: 100%;
+  padding: var(--sp-1);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2);
+}
+
+/* The class rule above would otherwise beat the UA [hidden] rule. */
+.ai-toolbar[hidden] { display: none; }
+.ai-toolbar .btn { font-size: var(--fs-xs); }
+
 .editor-side { display: flex; flex-direction: column; gap: var(--sp-5); min-width: 0; }
 
 .meta-section {
@@ -306,6 +330,9 @@
   flex-direction: column;
   gap: var(--sp-4);
   padding: var(--sp-2) 0 var(--sp-4);
+  /* Bounded conversation scroller; the composer sticks below it. */
+  max-height: 62vh;
+  overflow-y: auto;
 }
 
 .chat__msg {
@@ -351,6 +378,37 @@
 
 .chat__error { color: var(--color-danger); font-size: var(--fs-sm); }
 
+/* Message footer: timestamp, token usage, "Stopped" marker. */
+.chat__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  font-size: var(--fs-2xs);
+  color: var(--color-text-faint);
+}
+
+.chat__meta:empty { display: none; }
+
+/* Streaming caret shown while tokens are arriving. */
+.chat__cursor {
+  display: inline-block;
+  width: 0.5ch;
+  height: 1em;
+  margin-left: 0.125rem;
+  vertical-align: text-bottom;
+  background: var(--color-accent);
+  animation: chat-cursor-blink 1s step-end infinite;
+}
+
+@keyframes chat-cursor-blink { 50% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .chat__cursor { animation: none; }
+}
+
+:root[data-motion="reduced"] .chat__cursor { animation: none; }
+
 .chat__composer {
   position: sticky;
   bottom: 0;
@@ -388,6 +446,118 @@
 }
 
 .action-grid .btn { justify-content: flex-start; }
+
+/* --- Assistant layout: conversation history + chat ------------------------ */
+
+.assistant-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* Mobile: the chat comes first; history stacks below it. */
+.conv-panel { order: 2; }
+.assistant-main { order: 1; min-width: 0; }
+
+@media (min-width: 64rem) {
+  .assistant-layout {
+    display: grid;
+    grid-template-columns: 16rem minmax(0, 1fr);
+    gap: var(--sp-5);
+    align-items: start;
+  }
+  .conv-panel { order: 0; position: sticky; top: var(--sp-4); }
+  .assistant-main { order: 0; }
+}
+
+.conv-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.conv-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.conv-panel__title {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-faint);
+}
+
+.conv-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.conv-empty {
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+}
+
+.conv-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  border-radius: var(--radius-md);
+}
+
+.conv-item:hover { background: var(--color-surface-2); }
+.conv-item[data-active="true"] { background: var(--color-accent-soft); }
+
+.conv-item__open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.conv-item__open:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.conv-item__title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conv-item__meta {
+  font-size: var(--fs-2xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conv-item[data-active="true"] .conv-item__title,
+.conv-item[data-active="true"] .conv-item__meta { color: var(--color-accent); }
+
+.conv-item__menu { margin-right: var(--sp-1); }
 
 /* --- Activity & revisions ------------------------------------------------- */
 

@@ -120,3 +120,22 @@ model), `rate_limited` / `upstream_rate_limited` (429, `retryable: true`),
 `GROQ_API_KEY`), `configuration_error` (500: missing `SUPABASE_URL` /
 `SUPABASE_ANON_KEY`), `upstream_error` (502), `empty_response` (502),
 `timeout` (504), `method_not_allowed` (405).
+
+### Streaming (`"stream": true`)
+
+The only transport switch in the body is `stream`, validated as a boolean.
+When set, a successful reply is `200 text/event-stream` carrying **only**
+normalized frames built from upstream data:
+
+```
+data: {"delta":"…"}                 incremental text
+data: {"usage":{…},"model":"…"}     token usage (when the API reports it)
+data: {"error":{"code":"…","message":"…"}}   in-band failure
+data: [DONE]
+```
+
+Authentication, model allowlist, payload validation and the per-user rate
+limit all run **before** the stream starts, so failures in that phase are the
+regular JSON errors above (one streamed reply consumes one rate-limit slot).
+Mid-stream failures — no upstream bytes for 30 s, a 120 s total cap, or an
+upstream drop — arrive as in-band `{error}` frames using the same codes.
