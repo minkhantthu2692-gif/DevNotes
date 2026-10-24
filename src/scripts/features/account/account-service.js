@@ -15,10 +15,10 @@
  */
 
 import { getSupabaseClient, isSupabaseConfigured } from '../../services/supabase-client.js';
-import { authStore } from '../../../state.js';
-import { bus } from '../../../utils/bus.js';
-import { AppError } from '../../../utils/errors.js';
-import { h } from '../../../utils/dom.js';
+import { authStore } from '../../state.js';
+import { bus } from '../../utils/bus.js';
+import { AppError } from '../../utils/errors.js';
+import { h } from '../../utils/dom.js';
 import {
   PROFILE_LIMITS,
   avatarPalette,
