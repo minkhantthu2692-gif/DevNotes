@@ -1,346 +1,445 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terms of Service - DevNotes</title>
-    <link rel="stylesheet" href="src/styles/tokens.css">
-    <link rel="stylesheet" href="src/styles/base.css">
-    <style>
-        body {
-            background: var(--color-background, #F6F1E8);
-            color: var(--color-text, #1F2421);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="description" content="Terms of Service for DevNotes — a local-first, offline programming knowledge workspace with optional cloud sync and AI features." />
+  <title>Terms of Service — DevNotes</title>
+  <link rel="icon" href="./src/assets/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./src/assets/icons/icon-192.png" />
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem 4rem;
-        }
+  <!-- Same design system as the app, same load order (see index.html). -->
+  <link rel="stylesheet" href="./src/styles/tokens.css" />
+  <link rel="stylesheet" href="./src/styles/themes.css" />
+  <link rel="stylesheet" href="./src/fonts/fonts.css" />
+  <link rel="stylesheet" href="./src/styles/typography.css" />
 
-        header {
-            margin-bottom: 3rem;
-            padding-bottom: 2rem;
-            border-bottom: 2px solid var(--color-border, #E2D9C8);
-        }
+  <script>
+    // Apply the same persisted appearance preferences as the app, before first
+    // paint, so these pages match the user's theme and accent. This is the
+    // first-paint subset of src/scripts/features/settings/prefs.js.
+    (function () {
+      try {
+        var raw = localStorage.getItem('devnotes.ui');
+        var p = raw ? JSON.parse(raw) : {};
+        var root = document.documentElement;
 
-        h1 {
-            font-family: 'DM Serif Display', 'Roboto Slab', Georgia, serif;
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--color-text, #1F2421);
-            margin: 0 0 0.5rem;
-            line-height: 1.2;
-        }
+        var theme = p.theme || 'system';
+        var resolved = theme === 'system'
+          ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : theme;
+        root.setAttribute('data-theme', resolved);
 
-        .last-updated {
-            color: var(--color-text-secondary, #8A8A80);
-            font-size: 0.875rem;
-        }
+        if (p.accent) root.style.setProperty('--accent-user', p.accent);
+        if (p.fontSize) root.style.fontSize = p.fontSize;
+        if (p.lineHeight) root.style.setProperty('--leading-user', String(p.lineHeight));
+        if (p.letterSpacing) root.style.setProperty('--tracking-user', p.letterSpacing + 'em');
+        if (p.uiFont) root.style.setProperty('--font-ui', p.uiFont);
+      } catch (e) { /* Storage may be unavailable (private mode); defaults apply. */ }
+    })();
+  </script>
 
-        h2 {
-            font-family: 'DM Serif Display', 'Roboto Slab', Georgia, serif;
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--color-text, #1F2421);
-            margin: 2.5rem 0 1rem;
-            line-height: 1.3;
-        }
+  <style>
+    /* Page chrome for this standalone document. Every value comes from
+       tokens.css so light/dark themes and user accent colors match the app. */
+    *, *::before, *::after { box-sizing: border-box; }
 
-        h3 {
-            font-family: 'DM Serif Display', 'Roboto Slab', Georgia, serif;
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--color-text, #1F2421);
-            margin: 2rem 0 0.75rem;
-        }
+    html, body { height: 100%; margin: 0; }
 
-        p {
-            margin: 0 0 1rem;
-            color: var(--color-text, #1F2421);
-        }
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      overflow-x: hidden; /* ordinary content must never scroll the page sideways */
+    }
 
-        ul, ol {
-            margin: 0 0 1rem;
-            padding-left: 1.5rem;
-        }
+    .skip-link {
+      position: absolute;
+      left: var(--sp-3);
+      top: -4rem;
+      z-index: 1;
+      padding: var(--sp-2) var(--sp-4);
+      background: var(--color-accent);
+      color: var(--color-accent-fg);
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: top var(--dur-fast) var(--ease);
+    }
+    .skip-link:focus { top: var(--sp-3); }
 
-        li {
-            margin-bottom: 0.5rem;
-        }
+    /* --- Header ------------------------------------------------------------ */
+    .doc-header {
+      border-bottom: 0.0625rem solid var(--color-border);
+      background: var(--color-surface);
+    }
+    .doc-header__inner {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-3) var(--sp-5);
+      max-width: var(--panel-max);
+      margin: 0 auto;
+      padding: var(--sp-3) var(--sp-5);
+    }
+    .doc-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      color: var(--color-text);
+      font-size: var(--fs-lg);
+      font-weight: var(--fw-semibold);
+      letter-spacing: -0.01em;
+      text-decoration: none;
+    }
+    .doc-brand:hover { color: var(--color-text); }
+    .doc-brand img { width: 1.5rem; height: 1.5rem; }
 
-        a {
-            color: var(--color-accent, #C8853F);
-            text-decoration: none;
-        }
+    .doc-nav {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-1);
+      margin-left: auto;
+    }
+    .doc-nav a {
+      padding: var(--sp-1) var(--sp-3);
+      min-height: var(--control-h-sm);
+      display: inline-flex;
+      align-items: center;
+      border-radius: var(--radius-md);
+      color: var(--color-text-muted);
+      font-size: var(--fs-md);
+      font-weight: var(--fw-medium);
+      text-decoration: none;
+    }
+    .doc-nav a:hover { background: var(--color-surface-2); color: var(--color-text); }
+    .doc-nav a[aria-current="page"] {
+      background: var(--color-accent-soft);
+      color: var(--color-accent);
+    }
 
-        a:hover {
-            color: var(--color-accent-hover, #A86B2C);
-            text-decoration: underline;
-        }
+    /* --- Main -------------------------------------------------------------- */
+    .doc-main {
+      flex: 1;
+      width: 100%;
+      max-width: var(--panel-max);
+      margin: 0 auto;
+      padding: var(--sp-8) var(--sp-5) var(--sp-10);
+    }
 
-        .section {
-            margin-bottom: 2rem;
-        }
+    .doc-title { font-size: var(--fs-4xl); margin: 0 0 var(--sp-2); }
+    .doc-meta {
+      margin: 0 0 var(--sp-6);
+      color: var(--color-text-muted);
+      font-size: var(--fs-md);
+    }
 
-        .emphasis {
-            font-weight: 600;
-        }
+    .doc-callout {
+      margin: 0 0 var(--sp-6);
+      padding: var(--sp-4) var(--sp-5);
+      border: 0.0625rem solid var(--color-accent-border);
+      border-radius: var(--radius-lg);
+      background: var(--color-accent-soft);
+    }
+    .doc-callout p { margin: 0; }
 
-        .warning {
-            background: #F0E3D0;
-            border-left: 4px solid var(--color-accent, #C8853F);
-            padding: 1rem 1.25rem;
-            margin: 1.5rem 0;
-            border-radius: 4px;
-        }
+    .doc-toc {
+      margin: 0 0 var(--sp-8);
+      padding: var(--sp-5);
+      border: 0.0625rem solid var(--color-border);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface);
+    }
+    .doc-toc__title {
+      font-size: var(--fs-md);
+      font-weight: var(--fw-semibold);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-text-faint);
+      margin: 0 0 var(--sp-3);
+    }
+    .doc-toc ol {
+      columns: 2;
+      column-gap: var(--sp-6);
+      margin: 0;
+      padding-left: var(--sp-5);
+      font-size: var(--fs-md);
+    }
+    .doc-toc li {
+      margin-bottom: var(--sp-2);
+      break-inside: avoid;
+    }
 
-        .warning p {
-            margin: 0;
-        }
+    .doc-section { margin-bottom: var(--sp-8); scroll-margin-top: var(--sp-5); }
+    .doc-section h2 { font-size: var(--fs-2xl); margin: 0 0 var(--sp-3); }
+    .doc-section h3 { font-size: var(--fs-lg); margin: var(--sp-5) 0 var(--sp-2); }
+    .doc-section p { margin: 0 0 var(--sp-3); }
+    .doc-section ul, .doc-section ol { margin: 0 0 var(--sp-3); padding-left: var(--sp-6); }
+    .doc-section li { margin-bottom: var(--sp-2); }
 
-        footer {
-            margin-top: 4rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--color-border, #E2D9C8);
-            text-align: center;
-            color: var(--color-text-secondary, #8A8A80);
-            font-size: 0.875rem;
-        }
-    </style>
+    .doc-note {
+      margin: var(--sp-4) 0;
+      padding: var(--sp-4) var(--sp-5);
+      border-left: 0.1875rem solid var(--color-warning);
+      border-radius: var(--radius-md);
+      background: var(--color-warning-soft);
+    }
+    .doc-note p { margin: 0; }
+
+    .doc-warning {
+      margin: var(--sp-4) 0;
+      padding: var(--sp-4) var(--sp-5);
+      border-left: 0.1875rem solid var(--color-danger);
+      border-radius: var(--radius-md);
+      background: var(--color-danger-soft);
+    }
+    .doc-warning p { margin: 0; }
+
+    .doc-contact {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-1);
+      margin-top: var(--sp-3);
+    }
+
+    /* --- Footer ------------------------------------------------------------ */
+    .doc-footer {
+      border-top: 0.0625rem solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text-muted);
+      font-size: var(--fs-sm);
+    }
+    .doc-footer__inner {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-2) var(--sp-5);
+      justify-content: space-between;
+      max-width: var(--panel-max);
+      margin: 0 auto;
+      padding: var(--sp-5);
+    }
+    .doc-footer p { margin: 0; }
+    .doc-footer nav { display: flex; flex-wrap: wrap; gap: var(--sp-4); }
+
+    @media (max-width: 40rem) {
+      .doc-header__inner { padding: var(--sp-3) var(--sp-4); }
+      .doc-main { padding: var(--sp-6) var(--sp-4) var(--sp-9); }
+      .doc-nav { margin-left: 0; }
+      .doc-toc ol { columns: 1; }
+      .doc-title { font-size: var(--fs-3xl); }
+      .doc-footer__inner { padding: var(--sp-4); }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="container">
-        <header>
-            <h1>Terms of Service</h1>
-            <p class="last-updated">Last Updated: October 23, 2026</p>
-        </header>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
 
-        <main>
-            <div class="section">
-                <p>Welcome to DevNotes. These Terms of Service ("Terms") govern your access to and use of the DevNotes application ("Service", "App", or "DevNotes"). By accessing or using DevNotes, you agree to be bound by these Terms.</p>
-                <div class="warning">
-                    <p><strong>Important:</strong> Please read these Terms carefully. By using DevNotes, you agree to these Terms. If you do not agree, do not use the Service.</p>
-                </div>
-            </div>
-
-            <div class="section">
-                <h2>1. Acceptance of Terms</h2>
-                <p>By creating an account, accessing, or using DevNotes, you acknowledge that you have read, understood, and agree to be bound by these Terms and our <a href="privacy.html">Privacy Policy</a>. If you are using DevNotes on behalf of an organization, you represent that you have the authority to bind that organization to these Terms.</p>
-            </div>
-
-            <div class="section">
-                <h2>2. Description of Service</h2>
-                <p>DevNotes is an offline-first programming knowledge library that allows you to:</p>
-                <ul>
-                    <li>Create, organize, and store programming notes and code snippets</li>
-                    <li>Sync your content across multiple devices (optional)</li>
-                    <li>Use AI-powered features with your own API keys (optional)</li>
-                    <li>Import and export your data</li>
-                    <li>Customize the application appearance and behavior</li>
-                </ul>
-                <p>The Service is provided on an "as is" and "as available" basis.</p>
-            </div>
-
-            <div class="section">
-                <h2>3. Account Registration and Security</h2>
-                
-                <h3>Account Creation</h3>
-                <ul>
-                    <li>You must be at least 13 years old to use DevNotes</li>
-                    <li>You must provide accurate and complete information when creating an account</li>
-                    <li>You are responsible for maintaining the security of your account credentials</li>
-                    <li>You must use Google OAuth to authenticate your account</li>
-                </ul>
-
-                <h3>Account Security</h3>
-                <ul>
-                    <li>You are solely responsible for all activities that occur under your account</li>
-                    <li>You must notify us immediately of any unauthorized access or security breach</li>
-                    <li>We are not liable for any loss or damage from your failure to maintain account security</li>
-                </ul>
-
-                <h3>Account Termination</h3>
-                <p>You may delete your account at any time from within the application. We reserve the right to suspend or terminate accounts that violate these Terms.</p>
-            </div>
-
-            <div class="section">
-                <h2>4. User Content and Ownership</h2>
-                
-                <h3>Your Content</h3>
-                <p>"User Content" means any notes, code snippets, text, files, or other materials you create, upload, or store in DevNotes. You retain all ownership rights to your User Content.</p>
-
-                <h3>License to DevNotes</h3>
-                <p>By using DevNotes, you grant us a limited, non-exclusive, royalty-free license to:</p>
-                <ul>
-                    <li>Store and sync your User Content across your devices</li>
-                    <li>Process your User Content to provide the Service features</li>
-                    <li>Back up your User Content for service reliability</li>
-                </ul>
-                <p>This license exists solely to operate the Service and ends when you delete your content or account.</p>
-
-                <h3>Your Responsibilities</h3>
-                <p>You are solely responsible for your User Content. You represent and warrant that:</p>
-                <ul>
-                    <li>You own or have the necessary rights to all User Content you submit</li>
-                    <li>Your User Content does not violate any third-party rights</li>
-                    <li>Your User Content complies with these Terms and applicable laws</li>
-                </ul>
-            </div>
-
-            <div class="section">
-                <h2>5. Acceptable Use Policy</h2>
-                <p>You agree not to use DevNotes to:</p>
-                <ul>
-                    <li>Violate any applicable laws or regulations</li>
-                    <li>Infringe on intellectual property or other rights of any third party</li>
-                    <li>Upload malicious code, viruses, or any harmful software</li>
-                    <li>Attempt to gain unauthorized access to our systems or other user accounts</li>
-                    <li>Interfere with or disrupt the Service or servers</li>
-                    <li>Use automated scripts or bots to access the Service without authorization</li>
-                    <li>Reverse engineer, decompile, or disassemble any part of the Service</li>
-                    <li>Remove or modify any copyright, trademark, or proprietary notices</li>
-                    <li>Use the Service for any illegal, harmful, or abusive purposes</li>
-                    <li>Harass, abuse, or harm other users</li>
-                </ul>
-            </div>
-
-            <div class="section">
-                <h2>6. Third-Party Services</h2>
-                
-                <h3>Google OAuth</h3>
-                <p>Authentication is provided through Google OAuth. Your use of Google services is subject to Google's Terms of Service and Privacy Policy.</p>
-
-                <h3>Supabase</h3>
-                <p>Backend services are provided by Supabase. Data storage and synchronization are subject to Supabase's terms and policies.</p>
-
-                <h3>AI Services (Optional)</h3>
-                <p>When you choose to use AI features:</p>
-                <ul>
-                    <li>You must provide your own API keys</li>
-                    <li>You are responsible for compliance with the AI provider's terms</li>
-                    <li>You are responsible for any costs incurred with AI service providers</li>
-                    <li>We are not responsible for AI-generated content accuracy or appropriateness</li>
-                </ul>
-            </div>
-
-            <div class="section">
-                <h2>7. Intellectual Property Rights</h2>
-                
-                <h3>DevNotes Ownership</h3>
-                <p>DevNotes and its original content, features, functionality, and design are owned by us and are protected by international copyright, trademark, and other intellectual property laws.</p>
-
-                <h3>Open Source Components</h3>
-                <p>DevNotes may include open-source software components. These components are governed by their respective licenses, which are available in the application repository.</p>
-
-                <h3>Feedback</h3>
-                <p>If you provide feedback, suggestions, or ideas about DevNotes, you grant us the right to use them without compensation or attribution.</p>
-            </div>
-
-            <div class="section">
-                <h2>8. Data Backup and Loss</h2>
-                <p>While DevNotes is designed as an offline-first application with optional cloud sync:</p>
-                <ul>
-                    <li>You are responsible for maintaining local backups of your important data</li>
-                    <li>We perform regular backups but do not guarantee data recovery in all circumstances</li>
-                    <li>We are not liable for any data loss, regardless of cause</li>
-                    <li>You should regularly export your data using the built-in export features</li>
-                </ul>
-            </div>
-
-            <div class="section">
-                <h2>9. Service Modifications and Availability</h2>
-                <p>We reserve the right to:</p>
-                <ul>
-                    <li>Modify or discontinue any part of the Service with or without notice</li>
-                    <li>Impose limits on features or storage</li>
-                    <li>Perform maintenance that may temporarily interrupt the Service</li>
-                </ul>
-                <p>We strive for high availability but do not guarantee uninterrupted access. The Service may be unavailable due to maintenance, updates, or circumstances beyond our control.</p>
-            </div>
-
-            <div class="section">
-                <h2>10. Disclaimer of Warranties</h2>
-                <div class="warning">
-                    <p><strong>THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.</strong></p>
-                </div>
-                <p>We do not warrant that:</p>
-                <ul>
-                    <li>The Service will meet your specific requirements</li>
-                    <li>The Service will be uninterrupted, timely, secure, or error-free</li>
-                    <li>The results obtained from using the Service will be accurate or reliable</li>
-                    <li>Any errors in the Service will be corrected</li>
-                </ul>
-            </div>
-
-            <div class="section">
-                <h2>11. Limitation of Liability</h2>
-                <div class="warning">
-                    <p><strong>TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL WE BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, REVENUE, DATA, OR USE, WHETHER IN AN ACTION IN CONTRACT, TORT, OR OTHERWISE, ARISING OUT OF OR IN ANY WAY CONNECTED WITH THE SERVICE OR THESE TERMS.</strong></p>
-                </div>
-                <p>Our total liability to you for all claims arising out of or related to the Service shall not exceed the amount you paid us (if any) in the twelve months preceding the claim.</p>
-            </div>
-
-            <div class="section">
-                <h2>12. Indemnification</h2>
-                <p>You agree to indemnify, defend, and hold harmless DevNotes and its officers, directors, employees, and agents from any claims, liabilities, damages, losses, and expenses, including reasonable attorneys' fees, arising out of or in any way connected with:</p>
-                <ul>
-                    <li>Your access to or use of the Service</li>
-                    <li>Your User Content</li>
-                    <li>Your violation of these Terms</li>
-                    <li>Your violation of any third-party rights</li>
-                </ul>
-            </div>
-
-            <div class="section">
-                <h2>13. Governing Law and Dispute Resolution</h2>
-                <p>These Terms shall be governed by and construed in accordance with the laws of [Your Jurisdiction], without regard to its conflict of law provisions.</p>
-                <p>Any disputes arising from these Terms or the Service shall be resolved through:</p>
-                <ol>
-                    <li>Good faith negotiation between the parties</li>
-                    <li>If negotiation fails, binding arbitration in accordance with [Arbitration Rules]</li>
-                </ol>
-            </div>
-
-            <div class="section">
-                <h2>14. Changes to Terms</h2>
-                <p>We may revise these Terms from time to time. When we make material changes:</p>
-                <ul>
-                    <li>We will update the "Last Updated" date at the top of this page</li>
-                    <li>We will provide notice within the application</li>
-                    <li>For significant changes, we may require you to accept the new Terms</li>
-                </ul>
-                <p>Your continued use of DevNotes after any changes constitutes acceptance of the revised Terms.</p>
-            </div>
-
-            <div class="section">
-                <h2>15. Severability</h2>
-                <p>If any provision of these Terms is found to be invalid or unenforceable, that provision shall be limited or eliminated to the minimum extent necessary, and the remaining provisions shall remain in full force and effect.</p>
-            </div>
-
-            <div class="section">
-                <h2>16. Entire Agreement</h2>
-                <p>These Terms, together with our Privacy Policy, constitute the entire agreement between you and DevNotes regarding the Service and supersede all prior agreements and understandings.</p>
-            </div>
-
-            <div class="section">
-                <h2>17. Contact Information</h2>
-                <p>If you have questions about these Terms, please contact us:</p>
-                <p>
-                    <strong>Email:</strong> legal@devnotes.app<br>
-                    <strong>Support:</strong> support@devnotes.app<br>
-                    <strong>GitHub:</strong> <a href="https://github.com/yourusername/devnotes" target="_blank" rel="noopener noreferrer">github.com/yourusername/devnotes</a>
-                </p>
-            </div>
-        </main>
-
-        <footer>
-            <p>&copy; 2026 DevNotes. All rights reserved.</p>
-        </footer>
+  <header class="doc-header">
+    <div class="doc-header__inner">
+      <a class="doc-brand" href="./index.html">
+        <img src="./src/assets/icons/icon.svg" alt="" width="24" height="24" />
+        <span>DevNotes</span>
+      </a>
+      <nav class="doc-nav" aria-label="Legal pages">
+        <a href="./privacy.html">Privacy</a>
+        <a href="./terms.html" aria-current="page">Terms</a>
+      </nav>
     </div>
+  </header>
+
+  <main id="main-content" class="doc-main" tabindex="-1">
+    <article>
+      <h1 class="doc-title">Terms of Service</h1>
+      <p class="doc-meta">Last updated: October 23, 2026</p>
+
+      <div class="doc-callout">
+        <p><strong>The short version:</strong> DevNotes is a local-first tool that you can use entirely on your own device, free of charge and without an account. If you opt into cloud sync or AI features, the terms below describe what that means for you. Your notes remain yours.</p>
+      </div>
+
+      <nav class="doc-toc" aria-labelledby="toc-heading">
+        <h2 id="toc-heading" class="doc-toc__title">On this page</h2>
+        <ol>
+          <li><a href="#acceptance">Acceptance of terms</a></li>
+          <li><a href="#service">Description of the service</a></li>
+          <li><a href="#accounts">Accounts and eligibility</a></li>
+          <li><a href="#your-content">Your content and ownership</a></li>
+          <li><a href="#acceptable-use">Acceptable use</a></li>
+          <li><a href="#third-parties">Third-party services</a></li>
+          <li><a href="#open-source">Open source and licenses</a></li>
+          <li><a href="#backups">Backups and data loss</a></li>
+          <li><a href="#availability">Service availability and changes</a></li>
+          <li><a href="#disclaimer">Disclaimer of warranties</a></li>
+          <li><a href="#liability">Limitation of liability</a></li>
+          <li><a href="#indemnification">Indemnification</a></li>
+          <li><a href="#changes">Changes to these terms</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ol>
+      </nav>
+
+      <section id="acceptance" class="doc-section">
+        <h2>1. Acceptance of terms</h2>
+        <p>These Terms of Service (“Terms”) govern your access to and use of DevNotes (“the app”), an open-source, local-first programming knowledge workspace. By accessing or using the app, you agree to these Terms and to our <a href="./privacy.html">Privacy Policy</a>. If you do not agree, please do not use the app.</p>
+        <p>If you use DevNotes on behalf of an organization, you represent that you have the authority to bind that organization to these Terms.</p>
+      </section>
+
+      <section id="service" class="doc-section">
+        <h2>2. Description of the service</h2>
+        <p>DevNotes provides tools for managing personal programming knowledge, including:</p>
+        <ul>
+          <li>A Markdown lesson library with tags, search, syntax highlighting and revision history.</li>
+          <li>A code snippet library and a flashcard review system.</li>
+          <li>Import and export of your data as JSON or ZIP archives.</li>
+          <li>Light, dark and system themes, accent colors and typography controls.</li>
+          <li>Offline use — the app runs in your browser and stores data on your device.</li>
+          <li>Optional cloud sync across your devices, once you configure an account.</li>
+          <li>Optional AI assistance, once you configure it with your own API key or a deployed proxy.</li>
+        </ul>
+        <p>The app is provided free of charge, on an “as is” and “as available” basis, whether you run it from your own copy or from a hosted deployment.</p>
+      </section>
+
+      <section id="accounts" class="doc-section">
+        <h2>3. Accounts and eligibility</h2>
+        <h3>Eligibility</h3>
+        <ul>
+          <li>You must be at least 13 years old to use DevNotes.</li>
+          <li>You must provide accurate information when creating an account, and keep it up to date.</li>
+        </ul>
+
+        <h3>Accounts (optional)</h3>
+        <p>The core app works without an account. An account is needed only for optional cloud sync, and can be created with an email and password or by signing in with Google or GitHub via Supabase authentication.</p>
+
+        <h3>Security</h3>
+        <ul>
+          <li>You are responsible for activity that occurs under your account and for safeguarding your credentials.</li>
+          <li>Notify us promptly through the GitHub repository if you become aware of unauthorized use of your account.</li>
+        </ul>
+
+        <h3>Termination</h3>
+        <p>You may stop using the app and request deletion of your account at any time (see <a href="#contact">Contact</a>). We may suspend or terminate accounts that violate these Terms, abuse the service or expose it to legal risk.</p>
+      </section>
+
+      <section id="your-content" class="doc-section">
+        <h2>4. Your content and ownership</h2>
+        <h3>You own your content</h3>
+        <p>“Your content” means the lessons, notes, code snippets, flashcards, tags and other materials you create, import or store in DevNotes. You retain all rights to your content. The app's local-first design means content stored on your device is under your exclusive control.</p>
+
+        <h3>Limited license to provide the service</h3>
+        <p>When you enable sync, you grant us a limited, non-exclusive license to store and process your content solely as needed to operate the sync feature — transmitting it between your devices, enforcing access control and backing it up. This license ends when you delete your content or account, except where retention is required by law.</p>
+
+        <h3>Your responsibilities</h3>
+        <p>You are solely responsible for your content. You represent and warrant that you own or have the necessary rights to it, and that your use of it complies with these Terms and applicable law.</p>
+      </section>
+
+      <section id="acceptable-use" class="doc-section">
+        <h2>5. Acceptable use</h2>
+        <p>You agree not to use DevNotes to:</p>
+        <ul>
+          <li>Violate any applicable law or regulation.</li>
+          <li>Infringe the intellectual property or other rights of any third party.</li>
+          <li>Distribute malware, or upload content intended to harm devices or systems.</li>
+          <li>Attempt unauthorized access to systems, accounts or data that are not yours.</li>
+          <li>Disrupt or degrade the service, including through abusive automated requests.</li>
+          <li>Reverse engineer parts of the service except to the extent such restriction is prohibited by law.</li>
+          <li>Remove or alter proprietary notices.</li>
+          <li>Harass, abuse or harm other people.</li>
+        </ul>
+        <p>Because DevNotes is open source, studying and modifying the source code for your own use is expressly permitted under its license.</p>
+      </section>
+
+      <section id="third-parties" class="doc-section">
+        <h2>6. Third-party services</h2>
+        <p>The app optionally relies on third-party services, each governed by its own terms:</p>
+
+        <h3>Supabase (sync and accounts)</h3>
+        <p>If you enable sync, your data is stored in a Supabase project subject to <a href="https://supabase.com/pricing" target="_blank" rel="noopener noreferrer">Supabase's terms</a> and <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">privacy policy</a>.</p>
+
+        <h3>Google and GitHub (sign-in)</h3>
+        <p>When you sign in with an identity provider, your use of that provider is subject to its own terms and privacy policy (<a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">Google Terms</a>, <a href="https://docs.github.com/en/site-policy/github-terms/github-terms-of-service" target="_blank" rel="noopener noreferrer">GitHub Terms</a>).</p>
+
+        <h3>Groq (AI features)</h3>
+        <p>AI features are optional and require configuration. In bring-your-own-key mode you connect directly to Groq with your own API key, and you are responsible for compliance with <a href="https://groq.com/terms-of-service/" target="_blank" rel="noopener noreferrer">Groq's terms</a> and for any usage charges your key incurs. AI output is generated automatically, may be inaccurate, and is provided for your review — it is never applied to your notes without your explicit confirmation.</p>
+      </section>
+
+      <section id="open-source" class="doc-section">
+        <h2>7. Open source and licenses</h2>
+        <ul>
+          <li>The DevNotes application code is released under the MIT license (see the project's <code>LICENSE</code> and <code>package.json</code>).</li>
+          <li>Bundled third-party libraries and fonts are included under their respective licenses (including MIT, Apache-2.0, BSD-3-Clause and the SIL Open Font License), with license texts shipped alongside them.</li>
+          <li>Feedback you voluntarily provide may be used to improve the project without obligation or attribution.</li>
+        </ul>
+      </section>
+
+      <section id="backups" class="doc-section">
+        <h2>8. Backups and data loss</h2>
+        <div class="doc-note">
+          <p><strong>Local-first means you are the custodian of your data.</strong> Content stored in your browser can be lost if you clear browser data, switch devices or your browser evicts storage. Nothing in the app can recover it for you.</p>
+        </div>
+        <ul>
+          <li>Regularly export your library from Settings → <em>Account &amp; data</em> and keep copies somewhere safe.</li>
+          <li>Sync is a convenience feature, not a backup service. We recommend keeping export archives regardless of sync.</li>
+          <li>To the maximum extent permitted by law, we are not liable for loss of data or content.</li>
+        </ul>
+      </section>
+
+      <section id="availability" class="doc-section">
+        <h2>9. Service availability and changes</h2>
+        <ul>
+          <li>We may modify, suspend or discontinue parts of the service at any time, with or without notice.</li>
+          <li>Features, limits and model identifiers may change over time; AI model availability in particular depends on the provider.</li>
+          <li>The app is provided free of charge and without any uptime guarantee. Maintenance, hosting issues or circumstances beyond our control may cause interruptions.</li>
+        </ul>
+      </section>
+
+      <section id="disclaimer" class="doc-section">
+        <h2>10. Disclaimer of warranties</h2>
+        <div class="doc-warning">
+          <p><strong>To the maximum extent permitted by law, DevNotes is provided “as is” and “as available”, without warranties of any kind, whether express or implied — including merchantability, fitness for a particular purpose and non-infringement.</strong></p>
+        </div>
+        <p>We do not warrant that the app will be uninterrupted, secure or error-free, that it will meet your requirements, or that any output (including AI-generated content) will be accurate or reliable.</p>
+      </section>
+
+      <section id="liability" class="doc-section">
+        <h2>11. Limitation of liability</h2>
+        <div class="doc-warning">
+          <p><strong>To the maximum extent permitted by law, neither the project nor its contributors shall be liable for any indirect, incidental, special, consequential or punitive damages, or any loss of data, profits, goodwill or business opportunity, arising out of or in connection with your use of DevNotes.</strong></p>
+        </div>
+        <p>Because the service is provided free of charge, our aggregate liability for all claims relating to it shall not exceed one hundred US dollars (US $100) or the amount you paid us in the twelve months before the claim, whichever is greater. Some jurisdictions do not allow certain limitations, in which case these limitations apply to the fullest extent permitted.</p>
+      </section>
+
+      <section id="indemnification" class="doc-section">
+        <h2>12. Indemnification</h2>
+        <p>You agree to indemnify and hold harmless the project and its contributors from claims, damages, losses and expenses (including reasonable legal fees) arising out of your content, your use of the app, or your violation of these Terms or of any third-party right.</p>
+      </section>
+
+      <section id="changes" class="doc-section">
+        <h2>13. Changes to these terms</h2>
+        <p>We may revise these Terms from time to time. The “Last updated” date at the top of this page always reflects the current version; material changes will be announced in the project repository. Continued use of DevNotes after changes take effect constitutes acceptance of the revised Terms.</p>
+        <p>If a provision of these Terms is found unenforceable, the remaining provisions stay in effect. Our failure to enforce a provision is not a waiver of it. These Terms, together with the Privacy Policy, constitute the entire agreement between you and the project regarding DevNotes.</p>
+      </section>
+
+      <section id="contact" class="doc-section">
+        <h2>14. Contact</h2>
+        <p>DevNotes is an open-source project. For questions about these Terms, or anything else, please reach out through the project repository:</p>
+        <div class="doc-contact">
+          <span><strong>GitHub:</strong> <a href="https://github.com/minkhantthu2692-gif/DevNotes" target="_blank" rel="noopener noreferrer">github.com/minkhantthu2692-gif/DevNotes</a></span>
+          <span><strong>Issues:</strong> <a href="https://github.com/minkhantthu2692-gif/DevNotes/issues" target="_blank" rel="noopener noreferrer">Open an issue</a></span>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="doc-footer">
+    <div class="doc-footer__inner">
+      <p>© 2026 DevNotes. Open source under the MIT license.</p>
+      <nav aria-label="Footer">
+        <a href="./index.html">Open the app</a>
+        <a href="./privacy.html">Privacy Policy</a>
+        <a href="./terms.html">Terms of Service</a>
+      </nav>
+    </div>
+  </footer>
 </body>
 </html>

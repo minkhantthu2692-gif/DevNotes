@@ -1,264 +1,436 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Policy - DevNotes</title>
-    <link rel="stylesheet" href="src/styles/tokens.css">
-    <link rel="stylesheet" href="src/styles/base.css">
-    <style>
-        body {
-            background: var(--color-background, #F6F1E8);
-            color: var(--color-text, #1F2421);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="description" content="Privacy Policy for DevNotes — a local-first, offline programming knowledge workspace. No ads, no analytics, no tracking; your notes stay on your device unless you opt into sync." />
+  <title>Privacy Policy — DevNotes</title>
+  <link rel="icon" href="./src/assets/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./src/assets/icons/icon-192.png" />
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem 4rem;
-        }
+  <!-- Same design system as the app, same load order (see index.html). -->
+  <link rel="stylesheet" href="./src/styles/tokens.css" />
+  <link rel="stylesheet" href="./src/styles/themes.css" />
+  <link rel="stylesheet" href="./src/fonts/fonts.css" />
+  <link rel="stylesheet" href="./src/styles/typography.css" />
 
-        header {
-            margin-bottom: 3rem;
-            padding-bottom: 2rem;
-            border-bottom: 2px solid var(--color-border, #E2D9C8);
-        }
+  <script>
+    // Apply the same persisted appearance preferences as the app, before first
+    // paint, so these pages match the user's theme and accent. This is the
+    // first-paint subset of src/scripts/features/settings/prefs.js.
+    (function () {
+      try {
+        var raw = localStorage.getItem('devnotes.ui');
+        var p = raw ? JSON.parse(raw) : {};
+        var root = document.documentElement;
 
-        h1 {
-            font-family: 'DM Serif Display', 'Roboto Slab', Georgia, serif;
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--color-text, #1F2421);
-            margin: 0 0 0.5rem;
-            line-height: 1.2;
-        }
+        var theme = p.theme || 'system';
+        var resolved = theme === 'system'
+          ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : theme;
+        root.setAttribute('data-theme', resolved);
 
-        .last-updated {
-            color: var(--color-text-secondary, #8A8A80);
-            font-size: 0.875rem;
-        }
+        if (p.accent) root.style.setProperty('--accent-user', p.accent);
+        if (p.fontSize) root.style.fontSize = p.fontSize;
+        if (p.lineHeight) root.style.setProperty('--leading-user', String(p.lineHeight));
+        if (p.letterSpacing) root.style.setProperty('--tracking-user', p.letterSpacing + 'em');
+        if (p.uiFont) root.style.setProperty('--font-ui', p.uiFont);
+      } catch (e) { /* Storage may be unavailable (private mode); defaults apply. */ }
+    })();
+  </script>
 
-        h2 {
-            font-family: 'DM Serif Display', 'Roboto Slab', Georgia, serif;
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--color-text, #1F2421);
-            margin: 2.5rem 0 1rem;
-            line-height: 1.3;
-        }
+  <style>
+    /* Page chrome for this standalone document. Every value comes from
+       tokens.css so light/dark themes and user accent colors match the app. */
+    *, *::before, *::after { box-sizing: border-box; }
 
-        h3 {
-            font-family: 'DM Serif Display', 'Roboto Slab', Georgia, serif;
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--color-text, #1F2421);
-            margin: 2rem 0 0.75rem;
-        }
+    html, body { height: 100%; margin: 0; }
 
-        p {
-            margin: 0 0 1rem;
-            color: var(--color-text, #1F2421);
-        }
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      overflow-x: hidden; /* ordinary content must never scroll the page sideways */
+    }
 
-        ul, ol {
-            margin: 0 0 1rem;
-            padding-left: 1.5rem;
-        }
+    .skip-link {
+      position: absolute;
+      left: var(--sp-3);
+      top: -4rem;
+      z-index: 1;
+      padding: var(--sp-2) var(--sp-4);
+      background: var(--color-accent);
+      color: var(--color-accent-fg);
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: top var(--dur-fast) var(--ease);
+    }
+    .skip-link:focus { top: var(--sp-3); }
 
-        li {
-            margin-bottom: 0.5rem;
-        }
+    /* --- Header ------------------------------------------------------------ */
+    .doc-header {
+      border-bottom: 0.0625rem solid var(--color-border);
+      background: var(--color-surface);
+    }
+    .doc-header__inner {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-3) var(--sp-5);
+      max-width: var(--panel-max);
+      margin: 0 auto;
+      padding: var(--sp-3) var(--sp-5);
+    }
+    .doc-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      color: var(--color-text);
+      font-size: var(--fs-lg);
+      font-weight: var(--fw-semibold);
+      letter-spacing: -0.01em;
+      text-decoration: none;
+    }
+    .doc-brand:hover { color: var(--color-text); }
+    .doc-brand img { width: 1.5rem; height: 1.5rem; }
 
-        a {
-            color: var(--color-accent, #C8853F);
-            text-decoration: none;
-        }
+    .doc-nav {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-1);
+      margin-left: auto;
+    }
+    .doc-nav a {
+      padding: var(--sp-1) var(--sp-3);
+      min-height: var(--control-h-sm);
+      display: inline-flex;
+      align-items: center;
+      border-radius: var(--radius-md);
+      color: var(--color-text-muted);
+      font-size: var(--fs-md);
+      font-weight: var(--fw-medium);
+      text-decoration: none;
+    }
+    .doc-nav a:hover { background: var(--color-surface-2); color: var(--color-text); }
+    .doc-nav a[aria-current="page"] {
+      background: var(--color-accent-soft);
+      color: var(--color-accent);
+    }
 
-        a:hover {
-            color: var(--color-accent-hover, #A86B2C);
-            text-decoration: underline;
-        }
+    /* --- Main -------------------------------------------------------------- */
+    .doc-main {
+      flex: 1;
+      width: 100%;
+      max-width: var(--panel-max);
+      margin: 0 auto;
+      padding: var(--sp-8) var(--sp-5) var(--sp-10);
+    }
 
-        .section {
-            margin-bottom: 2rem;
-        }
+    .doc-title { font-size: var(--fs-4xl); margin: 0 0 var(--sp-2); }
+    .doc-meta {
+      margin: 0 0 var(--sp-6);
+      color: var(--color-text-muted);
+      font-size: var(--fs-md);
+    }
 
-        .emphasis {
-            font-weight: 600;
-        }
+    .doc-callout {
+      margin: 0 0 var(--sp-6);
+      padding: var(--sp-4) var(--sp-5);
+      border: 0.0625rem solid var(--color-accent-border);
+      border-radius: var(--radius-lg);
+      background: var(--color-accent-soft);
+    }
+    .doc-callout p { margin: 0; }
 
-        footer {
-            margin-top: 4rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--color-border, #E2D9C8);
-            text-align: center;
-            color: var(--color-text-secondary, #8A8A80);
-            font-size: 0.875rem;
-        }
-    </style>
+    .doc-toc {
+      margin: 0 0 var(--sp-8);
+      padding: var(--sp-5);
+      border: 0.0625rem solid var(--color-border);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface);
+    }
+    .doc-toc__title {
+      font-size: var(--fs-md);
+      font-weight: var(--fw-semibold);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-text-faint);
+      margin: 0 0 var(--sp-3);
+    }
+    .doc-toc ol {
+      columns: 2;
+      column-gap: var(--sp-6);
+      margin: 0;
+      padding-left: var(--sp-5);
+      font-size: var(--fs-md);
+    }
+    .doc-toc li {
+      margin-bottom: var(--sp-2);
+      break-inside: avoid;
+    }
+
+    .doc-section { margin-bottom: var(--sp-8); scroll-margin-top: var(--sp-5); }
+    .doc-section h2 { font-size: var(--fs-2xl); margin: 0 0 var(--sp-3); }
+    .doc-section h3 { font-size: var(--fs-lg); margin: var(--sp-5) 0 var(--sp-2); }
+    .doc-section p { margin: 0 0 var(--sp-3); }
+    .doc-section ul, .doc-section ol { margin: 0 0 var(--sp-3); padding-left: var(--sp-6); }
+    .doc-section li { margin-bottom: var(--sp-2); }
+
+    .doc-note {
+      margin: var(--sp-4) 0;
+      padding: var(--sp-4) var(--sp-5);
+      border-left: 0.1875rem solid var(--color-warning);
+      border-radius: var(--radius-md);
+      background: var(--color-warning-soft);
+    }
+    .doc-note p { margin: 0; }
+
+    .doc-contact {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-1);
+      margin-top: var(--sp-3);
+    }
+
+    /* --- Footer ------------------------------------------------------------ */
+    .doc-footer {
+      border-top: 0.0625rem solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text-muted);
+      font-size: var(--fs-sm);
+    }
+    .doc-footer__inner {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-2) var(--sp-5);
+      justify-content: space-between;
+      max-width: var(--panel-max);
+      margin: 0 auto;
+      padding: var(--sp-5);
+    }
+    .doc-footer p { margin: 0; }
+    .doc-footer nav { display: flex; flex-wrap: wrap; gap: var(--sp-4); }
+
+    @media (max-width: 40rem) {
+      .doc-header__inner { padding: var(--sp-3) var(--sp-4); }
+      .doc-main { padding: var(--sp-6) var(--sp-4) var(--sp-9); }
+      .doc-nav { margin-left: 0; }
+      .doc-toc ol { columns: 1; }
+      .doc-title { font-size: var(--fs-3xl); }
+      .doc-footer__inner { padding: var(--sp-4); }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="container">
-        <header>
-            <h1>Privacy Policy</h1>
-            <p class="last-updated">Last Updated: October 23, 2026</p>
-        </header>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
 
-        <main>
-            <div class="section">
-                <p>DevNotes ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our application.</p>
-            </div>
-
-            <div class="section">
-                <h2>1. Information We Collect</h2>
-                
-                <h3>Information You Provide</h3>
-                <p>When you use DevNotes, you may provide:</p>
-                <ul>
-                    <li><span class="emphasis">Account Information:</span> When you sign in with Google OAuth, we receive your name, email address, and profile picture from Google.</li>
-                    <li><span class="emphasis">User Content:</span> Notes, code snippets, tags, and other content you create within the application.</li>
-                    <li><span class="emphasis">Settings and Preferences:</span> Your application preferences, theme choices, font selections, and other configuration data.</li>
-                </ul>
-
-                <h3>Automatically Collected Information</h3>
-                <ul>
-                    <li><span class="emphasis">Device Information:</span> Browser type, operating system, and device identifiers.</li>
-                    <li><span class="emphasis">Usage Data:</span> How you interact with the application, features used, and error logs.</li>
-                    <li><span class="emphasis">Local Storage:</span> Data stored locally in your browser using IndexedDB for offline functionality.</li>
-                </ul>
-            </div>
-
-            <div class="section">
-                <h2>2. How We Use Your Information</h2>
-                <p>We use the information we collect to:</p>
-                <ul>
-                    <li>Provide, maintain, and improve DevNotes</li>
-                    <li>Authenticate your identity and manage your account</li>
-                    <li>Synchronize your notes across devices</li>
-                    <li>Provide AI-powered features when you choose to use them</li>
-                    <li>Respond to your requests, questions, and feedback</li>
-                    <li>Monitor and analyze usage patterns to improve user experience</li>
-                    <li>Detect, prevent, and address technical issues and security threats</li>
-                    <li>Comply with legal obligations</li>
-                </ul>
-            </div>
-
-            <div class="section">
-                <h2>3. Data Storage and Security</h2>
-                
-                <h3>Local Storage</h3>
-                <p>DevNotes is designed as an offline-first application. Your notes and content are primarily stored locally on your device using IndexedDB. This data remains under your control and is not automatically transmitted to our servers.</p>
-
-                <h3>Cloud Storage</h3>
-                <p>When you enable synchronization:</p>
-                <ul>
-                    <li>Your data is stored in Supabase's secure PostgreSQL database</li>
-                    <li>File attachments may be stored in Supabase Storage</li>
-                    <li>All data in transit is encrypted using industry-standard TLS/SSL protocols</li>
-                    <li>Data at rest is encrypted using Supabase's encryption standards</li>
-                </ul>
-
-                <h3>Security Measures</h3>
-                <p>We implement appropriate technical and organizational security measures, including:</p>
-                <ul>
-                    <li>Row Level Security (RLS) policies ensuring users can only access their own data</li>
-                    <li>Secure authentication via Google OAuth 2.0</li>
-                    <li>Regular security audits and updates</li>
-                    <li>Encryption of data in transit and at rest</li>
-                </ul>
-            </div>
-
-            <div class="section">
-                <h2>4. Third-Party Services</h2>
-                <p>DevNotes integrates with the following third-party services:</p>
-                
-                <h3>Google OAuth</h3>
-                <p>We use Google OAuth for authentication. When you sign in with Google, you grant us access to your basic profile information (name, email, profile picture). Google's use of your information is governed by <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google's Privacy Policy</a>.</p>
-
-                <h3>Supabase</h3>
-                <p>We use Supabase for backend services including authentication, database, and file storage. Supabase's data handling practices are governed by their <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</p>
-
-                <h3>Groq AI (Optional)</h3>
-                <p>When you choose to use AI features and provide your own API key:</p>
-                <ul>
-                    <li>Your selected content is sent to Groq's API for processing</li>
-                    <li>We do not store or log AI-generated content on our servers</li>
-                    <li>Groq's data practices are governed by their <a href="https://groq.com/privacy-policy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a></li>
-                </ul>
-            </div>
-
-            <div class="section">
-                <h2>5. Data Sharing and Disclosure</h2>
-                <p>We do not sell, trade, or rent your personal information to third parties. We may share your information only in the following circumstances:</p>
-                <ul>
-                    <li><span class="emphasis">With Your Consent:</span> When you explicitly authorize us to share specific information</li>
-                    <li><span class="emphasis">Service Providers:</span> With third-party services that help us operate DevNotes (Supabase, Groq)</li>
-                    <li><span class="emphasis">Legal Requirements:</span> When required by law, legal process, or government request</li>
-                    <li><span class="emphasis">Protection of Rights:</span> To protect our rights, privacy, safety, or property, and that of our users</li>
-                </ul>
-            </div>
-
-            <div class="section">
-                <h2>6. Your Rights and Choices</h2>
-                <p>You have the following rights regarding your personal information:</p>
-                <ul>
-                    <li><span class="emphasis">Access:</span> You can view and export all your data from within the application</li>
-                    <li><span class="emphasis">Correction:</span> You can edit your notes and content at any time</li>
-                    <li><span class="emphasis">Deletion:</span> You can delete individual notes or your entire account</li>
-                    <li><span class="emphasis">Data Portability:</span> You can export your data in standard formats (JSON, ZIP)</li>
-                    <li><span class="emphasis">Opt-Out:</span> You can disable synchronization or AI features at any time</li>
-                </ul>
-                <p>To exercise these rights or for questions about your data, contact us at the email address below.</p>
-            </div>
-
-            <div class="section">
-                <h2>7. Data Retention</h2>
-                <p>We retain your information for as long as your account is active or as needed to provide you services. If you delete your account:</p>
-                <ul>
-                    <li>Your data will be permanently deleted from our servers within 30 days</li>
-                    <li>Backups containing your data will be purged according to our backup retention schedule (maximum 90 days)</li>
-                    <li>Local data stored on your device will remain until you clear your browser data</li>
-                </ul>
-            </div>
-
-            <div class="section">
-                <h2>8. Children's Privacy</h2>
-                <p>DevNotes is not intended for use by children under the age of 13. We do not knowingly collect personal information from children under 13. If we learn that we have collected personal information from a child under 13, we will take steps to delete such information as quickly as possible.</p>
-            </div>
-
-            <div class="section">
-                <h2>9. International Data Transfers</h2>
-                <p>Your information may be transferred to and processed in countries other than your country of residence. These countries may have data protection laws different from your country. By using DevNotes, you consent to the transfer of your information to our facilities and service providers as described in this Privacy Policy.</p>
-            </div>
-
-            <div class="section">
-                <h2>10. Changes to This Privacy Policy</h2>
-                <p>We may update this Privacy Policy from time to time. We will notify you of any material changes by:</p>
-                <ul>
-                    <li>Posting the new Privacy Policy on this page</li>
-                    <li>Updating the "Last Updated" date</li>
-                    <li>Providing notice within the application for significant changes</li>
-                </ul>
-                <p>Your continued use of DevNotes after any changes indicates your acceptance of the updated Privacy Policy.</p>
-            </div>
-
-            <div class="section">
-                <h2>11. Contact Us</h2>
-                <p>If you have questions, concerns, or requests regarding this Privacy Policy or our privacy practices, please contact us at:</p>
-                <p>
-                    <strong>Email:</strong> privacy@devnotes.app<br>
-                    <strong>GitHub:</strong> <a href="https://github.com/yourusername/devnotes" target="_blank" rel="noopener noreferrer">github.com/yourusername/devnotes</a>
-                </p>
-            </div>
-        </main>
-
-        <footer>
-            <p>&copy; 2026 DevNotes. All rights reserved.</p>
-        </footer>
+  <header class="doc-header">
+    <div class="doc-header__inner">
+      <a class="doc-brand" href="./index.html">
+        <img src="./src/assets/icons/icon.svg" alt="" width="24" height="24" />
+        <span>DevNotes</span>
+      </a>
+      <nav class="doc-nav" aria-label="Legal pages">
+        <a href="./privacy.html" aria-current="page">Privacy</a>
+        <a href="./terms.html">Terms</a>
+      </nav>
     </div>
+  </header>
+
+  <main id="main-content" class="doc-main" tabindex="-1">
+    <article>
+      <h1 class="doc-title">Privacy Policy</h1>
+      <p class="doc-meta">Last updated: October 23, 2026</p>
+
+      <div class="doc-callout">
+        <p><strong>The short version:</strong> DevNotes is a local-first application. Your notes, snippets, flashcards and preferences are stored in your browser (IndexedDB) and stay on your device. We run no ads, no analytics and no tracking, and the app makes no external requests unless <em>you</em> choose to enable cloud sync or AI features.</p>
+      </div>
+
+      <nav class="doc-toc" aria-labelledby="toc-heading">
+        <h2 id="toc-heading" class="doc-toc__title">On this page</h2>
+        <ol>
+          <li><a href="#information-we-collect">Information we collect</a></li>
+          <li><a href="#local-storage">Local storage on your device</a></li>
+          <li><a href="#how-we-use">How we use information</a></li>
+          <li><a href="#third-party-services">Third-party services</a></li>
+          <li><a href="#ai-features">Optional AI features</a></li>
+          <li><a href="#data-sharing">Data sharing and disclosure</a></li>
+          <li><a href="#data-retention">Data retention</a></li>
+          <li><a href="#your-rights">Your rights and choices</a></li>
+          <li><a href="#security">Security</a></li>
+          <li><a href="#children">Children's privacy</a></li>
+          <li><a href="#international">International transfers</a></li>
+          <li><a href="#changes">Changes to this policy</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ol>
+      </nav>
+
+      <section id="information-we-collect" class="doc-section">
+        <h2>1. Information we collect</h2>
+        <p>DevNotes works without an account. The information involved depends entirely on which optional features you use.</p>
+
+        <h3>Content you create (always local)</h3>
+        <ul>
+          <li><strong>Your library:</strong> lessons, Markdown notes, code snippets, flashcards, tags, languages, categories and courses you create in the app.</li>
+          <li><strong>Preferences:</strong> theme, accent color, typography settings and similar options.</li>
+        </ul>
+        <p>This content is written to IndexedDB in your browser. It is never transmitted anywhere unless you enable sync or take an explicit export action.</p>
+
+        <h3>Account information (only if you sign in)</h3>
+        <p>Cloud sync and accounts are optional. If you enable them, authentication is handled by Supabase, and we receive:</p>
+        <ul>
+          <li>Your email address, and your name and profile picture if you sign in with an identity provider such as Google or GitHub.</li>
+          <li>A stable user identifier used to scope your synced data to your account.</li>
+          <li>The library content you choose to sync.</li>
+        </ul>
+
+        <h3>AI settings (only if you use AI features)</h3>
+        <ul>
+          <li>A Groq API key that you paste yourself, stored in this browser's local storage (see <a href="#ai-features">AI features</a> below).</li>
+          <li>The lesson text you explicitly select as context for a request.</li>
+        </ul>
+
+        <h3>What we do not collect</h3>
+        <ul>
+          <li>No cookies for tracking or advertising — the app does not use cookies at all.</li>
+          <li>No analytics, telemetry, crash-reporting or advertising SDKs.</li>
+          <li>No precise location, contacts, microphone, camera or clipboard access.</li>
+        </ul>
+      </section>
+
+      <section id="local-storage" class="doc-section">
+        <h2>2. Local storage on your device</h2>
+        <p>DevNotes uses two browser storage mechanisms, both under your control:</p>
+        <ul>
+          <li><strong>IndexedDB</strong> — your entire library, revision history, trash, the sync queue and any imported fonts.</li>
+          <li><strong>localStorage</strong> — a few small preferences only (appearance settings, last route, recent searches, and your Groq key if you add one).</li>
+          <li><strong>Service worker cache</strong> — cached copies of the app's own files (HTML, CSS, icons) so it loads instantly and works offline. This cache never contains your notes.</li>
+        </ul>
+        <p>Clearing your browser data or using “Erase everything” in Settings removes this information from your device. Exports you download never leave your device automatically.</p>
+      </section>
+
+      <section id="how-we-use" class="doc-section">
+        <h2>3. How we use information</h2>
+        <p>Information is used only to operate the features you actually use:</p>
+        <ul>
+          <li>To provide the app locally: editing, search, flashcard review, import/export and offline use.</li>
+          <li>To authenticate you and keep your synced data isolated to your account, if you sign in.</li>
+          <li>To synchronize your library across your own devices, if you enable sync.</li>
+          <li>To process the context you select with the AI provider you configured, if you use AI features.</li>
+        </ul>
+        <p>We do not use your information for advertising, profiling, marketing or building behavioral profiles, and we do not sell it.</p>
+      </section>
+
+      <section id="third-party-services" class="doc-section">
+        <h2>4. Third-party services</h2>
+        <p>The app itself is hosted as a static site (GitHub Pages). Beyond that, the only external services that ever see data are the ones you opt into:</p>
+
+        <h3>GitHub Pages (hosting)</h3>
+        <p>The application files are served by GitHub. Like any web host, GitHub processes standard technical request data (such as IP address and user agent) to deliver the site. See <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener noreferrer">GitHub's Privacy Statement</a>.</p>
+
+        <h3>Supabase (optional — sync and accounts)</h3>
+        <p>If you enable cloud sync, your account identity and synced library data are stored in a Supabase project. Access is enforced by database Row Level Security so that your data can only be read or written by your own authenticated session. Data in transit is encrypted with TLS. See <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">Supabase's Privacy Policy</a>.</p>
+
+        <h3>Google and GitHub sign-in (optional)</h3>
+        <p>If you sign in with Google or GitHub, those providers share your basic profile (name, email and profile picture) with Supabase to create your session. We do not receive your password. Your use of these providers is governed by <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google's Privacy Policy</a> and <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener noreferrer">GitHub's Privacy Statement</a>, respectively.</p>
+      </section>
+
+      <section id="ai-features" class="doc-section">
+        <h2>5. Optional AI features</h2>
+        <p>AI assistance is entirely opt-in and disabled until you configure it. In the default (bring-your-own-key) mode:</p>
+        <ul>
+          <li>You supply your own Groq API key; it is stored only in this browser's local storage and is sent from your browser directly to <code>api.groq.com</code> — it never passes through our servers.</li>
+          <li>Only the content you explicitly select is sent, capped at a small amount of lesson text per request. Your whole library is never uploaded.</li>
+          <li>AI-generated drafts are never applied to your notes without your explicit confirmation.</li>
+        </ul>
+        <div class="doc-note">
+          <p><strong>Please note:</strong> a key stored in a browser is protected from other users of the app, but not from someone with access to your own browser profile. Use a key with appropriate limits, and revoke it any time at <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com/keys</a>. Groq's handling of your requests is described in <a href="https://groq.com/privacy-policy/" target="_blank" rel="noopener noreferrer">Groq's Privacy Policy</a>.</p>
+        </div>
+      </section>
+
+      <section id="data-sharing" class="doc-section">
+        <h2>6. Data sharing and disclosure</h2>
+        <p>We do not sell, rent or trade your personal information. Data is shared only in these limited cases:</p>
+        <ul>
+          <li><strong>Service providers you opt into</strong> — Supabase (sync/accounts) and Groq (AI), strictly to provide the features you enabled.</li>
+          <li><strong>With your consent</strong> — for example, when you download an export file or share content yourself.</li>
+          <li><strong>Legal requirements</strong> — when required by applicable law, legal process or a valid government request.</li>
+          <li><strong>Protection of rights</strong> — to protect the service, its users or others from harm, fraud or abuse.</li>
+        </ul>
+      </section>
+
+      <section id="data-retention" class="doc-section">
+        <h2>7. Data retention</h2>
+        <ul>
+          <li><strong>Local data</strong> stays on your device until you delete it — individually, via Trash, or with “Erase everything” in Settings. We cannot and do not access it.</li>
+          <li><strong>Synced data and your account</strong> are retained while your account is active. You can delete individual records in the app at any time; to have your account and all server-side copies of your synced data removed, use the contact details below and we will process the request.</li>
+          <li><strong>Backups</strong> of the sync database rotate on the hosting provider's standard backup schedule and expire within a few weeks.</li>
+        </ul>
+      </section>
+
+      <section id="your-rights" class="doc-section">
+        <h2>8. Your rights and choices</h2>
+        <ul>
+          <li><strong>Access and portability</strong> — export your entire library at any time from Settings → <em>Account &amp; data</em> as a versioned JSON file or a ZIP with Markdown mirrors. Exports download straight to your device.</li>
+          <li><strong>Correction</strong> — edit any of your content whenever you like.</li>
+          <li><strong>Deletion</strong> — delete single items, purge the Trash, or erase all local data from Settings.</li>
+          <li><strong>Opt out of sync</strong> — sync can be suspended at any time; suspending or signing out never deletes your local library.</li>
+          <li><strong>Opt out of AI</strong> — remove your key in Settings → AI to disable AI features completely.</li>
+          <li><strong>Right to complaint</strong> — if you are in a region with data-protection rights (such as the EU/EEA or UK), you may lodge a complaint with your local supervisory authority.</li>
+        </ul>
+        <p>To exercise any right regarding data held on our sync service, contact us using the details in <a href="#contact">Contact</a>.</p>
+      </section>
+
+      <section id="security" class="doc-section">
+        <h2>9. Security</h2>
+        <ul>
+          <li>Synced data is protected by database Row Level Security policies that scope every read and write to your authenticated user — the server enforces ownership, not the interface.</li>
+          <li>All network traffic uses TLS encryption, both in transit to Supabase and to the AI provider.</li>
+          <li>Markdown rendering is sanitized, and saved content is never executed as code.</li>
+          <li>No secret keys ship in the application; the only shared secret (for optional proxy-based AI) lives server-side in infrastructure, never in frontend code.</li>
+        </ul>
+        <p>If you believe you have found a security issue, please report it responsibly through the GitHub repository (see <a href="#contact">Contact</a>).</p>
+      </section>
+
+      <section id="children" class="doc-section">
+        <h2>10. Children's privacy</h2>
+        <p>DevNotes is not directed at children under 13, and we do not knowingly collect personal information from children under 13. If you believe a child has provided us with personal information, contact us and we will delete it.</p>
+      </section>
+
+      <section id="international" class="doc-section">
+        <h2>11. International transfers</h2>
+        <p>DevNotes is a static application and the optional Supabase project may be hosted in a country different from yours. If you enable sync, your data is processed there by Supabase under its privacy policy and data-processing terms. By enabling sync, you acknowledge such transfers.</p>
+      </section>
+
+      <section id="changes" class="doc-section">
+        <h2>12. Changes to this policy</h2>
+        <p>We may update this policy from time to time. The “Last updated” date at the top of this page always reflects the current version, and material changes will be announced in the project repository. Continued use of DevNotes after changes take effect constitutes acceptance of the revised policy.</p>
+      </section>
+
+      <section id="contact" class="doc-section">
+        <h2>13. Contact</h2>
+        <p>DevNotes is an open-source project. For privacy questions, data requests or security reports, please reach out through the project repository:</p>
+        <div class="doc-contact">
+          <span><strong>GitHub:</strong> <a href="https://github.com/minkhantthu2692-gif/DevNotes" target="_blank" rel="noopener noreferrer">github.com/minkhantthu2692-gif/DevNotes</a></span>
+          <span><strong>Issues:</strong> <a href="https://github.com/minkhantthu2692-gif/DevNotes/issues" target="_blank" rel="noopener noreferrer">Open an issue</a> (please mark privacy requests clearly)</span>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="doc-footer">
+    <div class="doc-footer__inner">
+      <p>© 2026 DevNotes. Open source under the MIT license.</p>
+      <nav aria-label="Footer">
+        <a href="./index.html">Open the app</a>
+        <a href="./privacy.html">Privacy Policy</a>
+        <a href="./terms.html">Terms of Service</a>
+      </nav>
+    </div>
+  </footer>
 </body>
 </html>
