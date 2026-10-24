@@ -6,6 +6,14 @@ Contents:
   indexes, the `devnotes_schema_info` view, and the private
   `devnotes-exports` storage bucket. Plain SQL: paste into the SQL editor
   **or** push with the CLI.
+- `migrations/0002_profiles.sql` — the `profiles` table, the `devnotes-avatars`
+  bucket and the trigger that seeds a profile row on first sign-in.
+- `migrations/0003_account.sql` — `delete_account()`, the server-side step that
+  makes Account & Sync → **Delete account** permanent: the publishable key may
+  never delete auth users, so the deletion runs as SECURITY DEFINER SQL scoped
+  to `auth.uid()`. **Reset user data** needs no SQL of its own — it deletes
+  through the per-table RLS `DELETE` policies from the client, so it works
+  even before this file is applied.
 - `functions/ai-proxy/index.ts` — authenticated Groq proxy (Deno edge
   function). The **only** place a shared `GROQ_API_KEY` may exist.
 
@@ -17,7 +25,7 @@ With the Supabase CLI:
 
 ```sh
 supabase link --project-ref <your-project-ref>
-supabase db push            # applies migrations/0001_init.sql
+supabase db push            # applies every file in migrations/, in order
 ```
 
 Without the CLI: open **Dashboard → SQL Editor**, paste the whole file, Run.
@@ -26,6 +34,13 @@ not retrofit columns onto tables that already exist.)
 
 > `auth.uid()` is used for column defaults and RLS, so the SQL must run on a
 > Supabase project (not plain PostgreSQL).
+
+> **Verifying `0003_account.sql`** (it could not be exercised without a live
+> project and real credentials): after applying it, sign in to the app, use
+> Account & Sync → *Delete account* with a throwaway account, and confirm the
+> user disappears from **Authentication → Users**. A missing function or a
+> missing privilege is reported verbatim in the UI — the app never claims the
+> account was deleted unless the call succeeded.
 
 ## 2. Configure secrets (edge function)
 

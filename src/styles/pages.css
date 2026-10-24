@@ -552,6 +552,282 @@
   box-shadow: var(--shadow-1);
 }
 
+/* Page hero: icon tile, title, live sync chip and a small motto on wide
+   screens. overflow:hidden keeps the rotated motto from ever causing
+   horizontal page scroll (AGENTS.md §5). */
+.account-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  padding: var(--sp-4) var(--sp-5);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(120% 150% at 100% 0%, var(--color-accent-soft), transparent 60%),
+    var(--color-surface);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+
+.account-hero__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+}
+.account-hero__icon .icon { width: 1.5rem; height: 1.5rem; }
+
+.account-hero__text {
+  flex: 1 1 16rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.account-hero__text h1 { margin: 0; font-size: var(--fs-3xl); letter-spacing: -0.02em; }
+.account-hero__subtitle { margin: 0; color: var(--color-text-muted); font-size: var(--fs-md); }
+
+.account-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: var(--control-h-sm);
+  padding: 0 var(--sp-3);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+}
+.account-chip .icon { width: 1rem; height: 1rem; }
+.account-chip[data-tone="accent"] { background: var(--color-accent-soft); border-color: transparent; color: var(--color-accent); }
+.account-chip[data-tone="success"] { background: var(--color-success-soft); border-color: transparent; color: var(--color-success); }
+.account-chip[data-tone="warning"] { background: var(--color-warning-soft); border-color: transparent; color: var(--color-warning); }
+.account-chip[data-tone="danger"] { background: var(--color-danger-soft); border-color: transparent; color: var(--color-danger); }
+.account-chip[data-tone="neutral"] { background: var(--color-surface-2); color: var(--color-text-muted); }
+
+.account-hero__motto {
+  display: none;
+  margin-left: auto;
+  font-size: var(--fs-md);
+  font-style: italic;
+  line-height: 1.35;
+  text-align: right;
+  white-space: pre-line;
+  color: var(--color-accent);
+  opacity: 0.85;
+  transform: rotate(-6deg);
+}
+@media (min-width: 72rem) { .account-hero__motto { display: block; } }
+
+/* Two columns: profile + account management | sync + conflicts + queue. */
+.account-layout {
+  display: grid;
+  gap: var(--gap-section);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+@media (min-width: 64rem) {
+  .account-layout { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+}
+
+.account-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-section);
+  min-width: 0;
+}
+
+/* The page's own cards get roomier padding and a lift so the layout reads as
+   one designed screen rather than a stack of defaults. */
+.account-layout .card {
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  box-shadow: var(--shadow-1);
+}
+
+/* Card header: icon tile + title + description + optional trailing action. */
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.panel-head__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+.panel-head__icon .icon { width: 1.25rem; height: 1.25rem; }
+
+.panel-head__text {
+  flex: 1 1 12rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+.panel-head__title { margin: 0; font-size: var(--fs-lg); font-weight: var(--fw-semibold); }
+.panel-head__sub { margin: 0; font-size: var(--fs-sm); line-height: 1.5; color: var(--color-text-muted); }
+.panel-head__aside { margin-left: auto; flex: none; }
+
+/* Sync panel: status row, count tiles, cloud row. */
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+}
+.sync-status[data-tone="accent"] { background: var(--color-accent-soft); border-color: transparent; }
+.sync-status[data-tone="success"] { background: var(--color-success-soft); border-color: transparent; }
+.sync-status[data-tone="warning"] { background: var(--color-warning-soft); border-color: transparent; }
+.sync-status[data-tone="danger"] { background: var(--color-danger-soft); border-color: transparent; }
+
+.sync-status__disc {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+.sync-status[data-tone="accent"] .sync-status__disc { color: var(--color-accent); }
+.sync-status[data-tone="success"] .sync-status__disc { color: var(--color-success); }
+.sync-status[data-tone="warning"] .sync-status__disc { color: var(--color-warning); }
+.sync-status[data-tone="danger"] .sync-status__disc { color: var(--color-danger); }
+
+.sync-status__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.125rem; }
+.sync-status__title { font-size: var(--fs-md); font-weight: var(--fw-semibold); }
+.sync-status__meta { font-size: var(--fs-xs); color: var(--color-text-muted); overflow-wrap: anywhere; }
+/* The chip sits on a tinted row: give it the surface so it still reads as a
+   chip instead of dissolving into the background. */
+.sync-status .badge { background: var(--color-surface); }
+
+.stat-tiles {
+  display: grid;
+  gap: var(--sp-2);
+  grid-template-columns: repeat(auto-fit, minmax(min(7rem, 100%), 1fr));
+}
+
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: var(--sp-3);
+  min-width: 0;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+.stat-tile__value { font-size: var(--fs-xl); font-weight: var(--fw-semibold); line-height: 1.2; }
+.stat-tile__label { font-size: var(--fs-2xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; overflow-wrap: anywhere; }
+.stat-tile[data-tone="danger"] .stat-tile__value { color: var(--color-danger); }
+
+.cloud-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-3);
+  border: 0.0625rem dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+}
+.cloud-row__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-accent);
+}
+.cloud-row__text { flex: 1 1 12rem; min-width: 0; display: flex; flex-direction: column; gap: 0.125rem; }
+.cloud-row__title { font-size: var(--fs-md); font-weight: var(--fw-medium); }
+.cloud-row__hint { font-size: var(--fs-xs); color: var(--color-text-muted); overflow-wrap: anywhere; }
+
+/* Account management: session row + danger zone. */
+.account-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-3);
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+}
+.account-identity .avatar { flex: none; }
+.account-identity__text { flex: 1 1 10rem; min-width: 0; display: flex; flex-direction: column; gap: 0.125rem; }
+.account-identity__email { font-size: var(--fs-md); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.account-identity__meta { font-size: var(--fs-xs); color: var(--color-text-muted); font-family: var(--font-code); }
+.account-identity__actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+
+.danger-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 0.0625rem solid color-mix(in oklab, var(--color-danger) 45%, transparent);
+  border-radius: var(--radius-lg);
+  background: var(--color-danger-soft);
+}
+.danger-group__title {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-danger);
+}
+.danger-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.danger-row + .danger-row {
+  padding-top: var(--sp-3);
+  border-top: 0.0625rem solid color-mix(in oklab, var(--color-danger) 25%, transparent);
+}
+.danger-row__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-danger);
+}
+.danger-row__text { flex: 1 1 13rem; min-width: 0; display: flex; flex-direction: column; gap: 0.125rem; }
+.danger-row__title { font-size: var(--fs-md); font-weight: var(--fw-semibold); }
+.danger-row__hint { font-size: var(--fs-xs); line-height: 1.5; color: var(--color-text-muted); overflow-wrap: anywhere; }
+
 .queue-item {
   display: flex;
   align-items: center;
@@ -562,11 +838,17 @@
 }
 
 .queue-item:last-child { border-bottom: 0; }
-.queue-item__main { flex: 1; min-width: 0; }
-.queue-item__title { font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.queue-item__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.125rem; }
+.queue-item__title,
+.queue-item__label { font-weight: var(--fw-medium); overflow-wrap: anywhere; }
 .queue-item__meta { font-size: var(--fs-xs); color: var(--color-text-muted); overflow-wrap: anywhere; }
 .queue-item[data-status="failed"] .queue-item__meta { color: var(--color-danger); }
 .queue-item[data-status="conflict"] .queue-item__meta { color: var(--color-warning); }
+.queue-item__actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; justify-content: flex-end; flex: none; }
+@media (max-width: 30rem) {
+  .queue-item { flex-wrap: wrap; }
+  .queue-item__actions { justify-content: flex-start; width: 100%; }
+}
 
 .conflict-card {
   display: flex;
@@ -580,6 +862,14 @@
 
 .conflict-card__title { font-weight: var(--fw-semibold); }
 .conflict-card__meta { font-size: var(--fs-xs); color: var(--color-text-muted); }
+.conflict-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.conflict-card__head .text-muted { min-width: 0; overflow-wrap: anywhere; }
 
 .conflict-sides {
   display: grid;
@@ -616,6 +906,36 @@
   max-height: 12rem;
   overflow: auto;
 }
+
+/* Side-by-side versions rendered by pages/account.js. */
+.conflict-versions {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 46rem) {
+  .conflict-versions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.conflict-pane {
+  padding: var(--sp-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.conflict-pane__title {
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-faint);
+}
+.conflict-pane__body { color: var(--color-text); }
+.conflict-pane__meta { margin-top: var(--sp-2); font-size: var(--fs-xs); color: var(--color-text-muted); }
 
 .choice-list { display: flex; flex-direction: column; gap: var(--sp-3); }
 
@@ -674,32 +994,53 @@
 .profile__avatar-host { display: flex; justify-content: center; }
 @media (min-width: 40rem) { .profile__avatar-host { justify-content: flex-start; } }
 
-.profile__subtitle {
-  margin: 0;
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-text-faint);
+/* Identity block beside the profile fields: avatar with an accent ring plus
+   the saved name / handle / email. */
+.profile__identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  text-align: center;
+  /* The grid sets align-items:start, which would shrink this column to its
+     content and leave margin-top:auto on .profile__actions with no free
+     space to use — stretch it so the action stack can sit on the baseline of
+     the fields beside it. */
+  align-self: stretch;
 }
 
-.profile__file {
-  display: block;
+@media (min-width: 40rem) {
+  .profile__identity { align-items: flex-start; text-align: left; }
+}
+
+.profile__identity .avatar {
+  box-shadow: 0 0 0 0.25rem var(--color-accent-soft),
+              0 0 0 0.0625rem var(--color-accent-border);
+}
+.profile__identity-text { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+.profile__identity-name { font-size: var(--fs-lg); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.profile__identity-handle { font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--color-accent); overflow-wrap: anywhere; }
+.profile__identity-email { font-size: var(--fs-xs); color: var(--color-text-muted); overflow-wrap: anywhere; }
+
+/* Stacked actions under the identity: Profile picture (opens the hidden
+   picker) above Save profile. margin-top:auto pins the pair to the bottom of
+   the column so it lines up with the Bio field beside it. */
+.profile__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
   width: 100%;
-  font: inherit;
-  color: var(--color-text-muted);
+  margin-top: auto;
+  padding-top: var(--sp-1);
 }
-.profile__file::file-selector-button {
-  margin-inline-end: var(--sp-3);
-  padding: var(--sp-2) var(--sp-3);
-  font: inherit;
-  color: inherit;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
+.profile__actions .btn { width: 100%; justify-content: center; }
+
+/* Cap the identity track: without it the `auto` column grows to a long
+   email's max-content width and squeezes the form fields beside it — and the
+   stacked buttons need enough room for their labels. */
+@media (min-width: 40rem) {
+  .profile-card .profile__grid { grid-template-columns: minmax(0, 11.5rem) minmax(0, 1fr); }
 }
-.profile__file::file-selector-button:hover { border-color: var(--color-accent-border); }
 
 /* --- Import / export ------------------------------------------------------ */
 

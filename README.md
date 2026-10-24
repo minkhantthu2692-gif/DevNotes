@@ -49,6 +49,7 @@ Burmese readers: [အပြည့်အဝ ဆက်တင်လမ်းညွ�
 - Cloud sync with a persistent operation queue, conflict detection and manual resolution
 - Email/password accounts, plus Google/GitHub OAuth once providers are configured
 - Profile: username and profile photo shown in the header, editable on the **Account** page — uploaded photos are cropped and stripped of metadata, and accounts signed up via OAuth get their username and photo from the provider (falling back to the email's local part and a generated initial-avatar)
+- **Account management** on **Account & Sync**: sign out, an export shortcut, **Reset user data** (typed `RESET`) which deletes everything uploaded to Supabase — the seven sync tables, your profile row and photo — plus this browser's copy, while the account and sign-in stay; and **Delete account** (typed `DELETE`) which removes the account and all of its data so the same email, Google or GitHub login can register again later (needs `0003_account.sql`; reports the real database error until it is applied)
 - AI assistant, AI-drafted flashcards (which always require your approval) and AI writing help in the editor — via your own Groq key (BYOK) or a server-side proxy
 
 ## Browser requirements
@@ -115,6 +116,7 @@ src/
 supabase/
   migrations/0001_init.sql     tables, RLS, indexes, private export bucket
   migrations/0002_profiles.sql profiles table, avatar bucket, sign-in trigger
+  migrations/0003_account.sql delete_account() RPC (permanent account deletion)
   functions/ai-proxy/index.ts  authenticated Groq proxy (server-side secret)
   README.md                    detailed Supabase instructions
 tests/
@@ -140,7 +142,7 @@ tests/
 > Full step-by-step detail, including CLI commands and the `ai-proxy` error codes, lives in [`supabase/README.md`](supabase/README.md).
 
 1. **Create a project** at <https://supabase.com/dashboard> → *New project*.
-2. **Run the migrations** in `supabase/migrations/` (`0001_init.sql`, then `0002_profiles.sql`):
+2. **Run the migrations** in `supabase/migrations/` (`0001_init.sql`, then `0002_profiles.sql`, then `0003_account.sql`):
    - CLI: `supabase link --project-ref <ref>` then `supabase db push`
    - or paste each file into **Dashboard → SQL Editor** and run it in order
 
@@ -174,6 +176,8 @@ OAuth needs extra Supabase configuration and **will not work until you do it** �
 `supabase/migrations/0001_init.sql` creates `devnotes-exports` as a **private** bucket, per-user via `(storage.foldername(name))[1] = auth.uid()::text`. The app **never auto-uploads local files**: exports download to the user's machine; the bucket is only for explicitly configured export flows.
 
 `supabase/migrations/0002_profiles.sql` creates `devnotes-avatars` for profile photos. It is **public read, owner-only write**: the header renders the photo with `<img src>` on every route, so a private bucket would need a signed URL per render (which expires and breaks offline). The write path stays locked down — `INSERT`/`UPDATE`/`DELETE` policies scope every object to the uploader's own `<uid>/` folder, so no user can replace or delete another user's photo. Photos are cropped to a square, downscaled, and re-encoded in the browser first (EXIF/metadata never leaves the device). The **stored** file is capped at 512 KB — the cap is applied to the encoded output, not the picked file, because re-encoding can multiply the byte count (a small source image can expand into a much larger lossless PNG). You may pick any image up to 10 MB; PNG is used when it fits the cap, otherwise the image falls back to JPEG. This is a deliberate, documented exception to "private by default" (AGENTS.md §11); the `profiles` *rows* themselves remain private via RLS.
+
+   `0003_account.sql` adds `delete_account()`, the SECURITY DEFINER function behind Account & Sync → *Delete account*. The browser may never delete auth users with the publishable key, so permanent deletion happens server-side, scoped to `auth.uid()`. Until this migration is applied the button reports the missing function and deletes nothing; verify it once against your project — the SQL cannot be exercised offline (AGENTS.md §17).
 
 ## AI setup (Groq) — optional
 
@@ -219,6 +223,8 @@ Settings → *Account & data*:
 
 Everything runs in one IndexedDB transaction — a failed import leaves your library untouched. Malformed records are reported and skipped rather than blocking the rest of the backup. Trash can be purged by age, and “Erase everything” (typed `ERASE` confirmation) resets the database after an export prompt.
 
+Account & Sync → *Account management* offers two cloud-aware actions. **Reset user data** (typed `RESET` confirmation) deletes everything the account uploaded — the seven sync tables, the profile row and the avatar objects — through the same RLS-scoped deletes the sync engine uses, then clears this browser; the account and its sign-in stay, re-seeded to a fresh state on the next load. **Delete account** (typed `DELETE`) goes further: `0003_account.sql`'s `delete_account()` removes the cloud rows and the auth user itself, so the same email or OAuth login can be used for a brand-new account afterwards, and this browser is wiped last.
+
 ## Fonts
 
 - Interface and code fonts are independently configurable (Settings → Typography).
@@ -231,7 +237,7 @@ Everything runs in one IndexedDB transaction — a failed import leaves your lib
 Both suites were executed against this codebase:
 
 ```sh
-npm test               # unit suite: 87 tests, 6 files  → 87 pass / 0 fail
+npm test               # unit suite: 109 tests, 8 files → 109 pass / 0 fail
 npm run test:browser   # browser smoke: 12 steps       → 12 pass / 0 fail
 node tests/browser/stylecheck.mjs   # diagnose CSS loading on any deployment
 
@@ -261,6 +267,8 @@ Tests requiring real Supabase/Groq credentials (live RLS policies, live OAuth, r
 | Sign-in fails immediately | RLS/migration not run, or email confirmation is required. Check the message shown on the form. |
 | OAuth buttons report a redirect error | Provider credentials or **Authentication → URL Configuration** redirect URLs missing — see *OAuth* above. |
 | Sync shows *failed* items | Open Account → *Pending operations*: **Retry all** after fixing the cause, or **Discard** items you don't want. Conflicts get their own card with side-by-side versions. |
+| *Delete account* says the function is missing | `0003_account.sql` has not been run — paste it into **SQL Editor**, then retry. Nothing is deleted until the call succeeds. |
+| *Reset user data* stops naming a table | That table's migration (0001/0002) is missing, or the connection dropped — the message names the table. Re-running the reset is safe: every delete is idempotent. |
 | AI: 401/403 | BYOK key invalid/revoked (re-enter in Settings → AI) or proxy caller not signed in. |
 | AI: 429 / model not found | Rate limit (back off) or a retired model id — use *Load available models* or the Groq docs. |
 | Service worker serving an old shell | Bump `CACHE` in `sw.js` (or hard-reload); caches are version-scoped and cleaned on activate. |
