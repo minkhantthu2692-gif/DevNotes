@@ -32,6 +32,7 @@ function matchRoute(path) {
 
   const [head, a] = segments;
   switch (head) {
+    case 'auth': return { pageId: 'auth', params: {}, query: segments.slice(1).join('/') };
     case 'dashboard': return { pageId: 'dashboard', params: {} };
     case 'library': return { pageId: 'library', params: {} };
     case 'languages': return { pageId: 'languages', params: {} };

@@ -9,6 +9,7 @@ import { navigate } from '../router.js';
 import { bus } from '../utils/bus.js';
 import { routeStore, syncStore, authStore, uiStore } from '../state.js';
 import { getPrefs, savePrefs } from '../features/settings/prefs.js';
+import { avatarElement, getCachedProfile, loadProfile } from '../features/account/account-service.js';
 import { openMenu } from './menu.js';
 import { toast } from './toast.js';
 import { refreshSyncStatus } from '../sync/connectivity.js';
@@ -164,11 +165,44 @@ export function mountTopbar(container) {
   const syncHost = h('span', { id: 'topbar-sync' });
 
   const accountBtn = h('button', {
-    class: 'icon-btn',
+    class: 'icon-btn account-btn',
     type: 'button',
     attrs: { 'aria-label': 'Account', 'data-tooltip': 'Account & sync' },
     on: { click: () => navigate('/account') },
   }, [icon('user')]);
+
+  /**
+   * Show the signed-in user's avatar + username in the header. Falls back to
+   * the generic person icon when signed out. Re-renders on auth/profile change
+   * so a saved username or new photo updates every header at once.
+   */
+  function renderAccount() {
+    if (!accountBtn) return;
+    const { status, user } = authStore.get();
+    clear(accountBtn);
+
+    if (status !== 'signed-in' || !user) {
+      accountBtn.classList.remove('account-btn--signed-in');
+      accountBtn.setAttribute('aria-label', 'Account');
+      accountBtn.setAttribute('data-tooltip', 'Account & sync');
+      accountBtn.appendChild(icon('user'));
+      return;
+    }
+
+    const profile = getCachedProfile();
+    const name = profile?.username || user?.email?.split('@')[0] || 'Account';
+
+    accountBtn.classList.add('account-btn--signed-in');
+    accountBtn.setAttribute('aria-label', `Account — ${name}. Open Account & Sync.`);
+    accountBtn.setAttribute('data-tooltip', `${name} · Account & sync`);
+    accountBtn.appendChild(avatarElement(profile || { username: name }, { size: 24, className: 'account-btn__avatar' }));
+    accountBtn.appendChild(h('span', { class: 'account-btn__name', text: name }));
+
+    // Seed the profile once per sign-in so the header has a real username.
+    if (!getCachedProfile()) void loadProfile().then(renderAccount).catch(() => {});
+  }
+
+  accountBtn.renderAccount = renderAccount;
 
   container.append(
     h('div', { class: 'topbar__left' }, [menuBtn, breadcrumbs]),
@@ -188,7 +222,9 @@ export function mountTopbar(container) {
   bus.on('navigation:start', () => updateBreadcrumbs([]));
   bus.on('prefs:saved', () => { if (themeBtn) renderThemeButton(); });
   syncStore.subscribe(updateSyncPill);
-  authStore.subscribe(updateSyncPill);
+  authStore.subscribe(() => { updateSyncPill(); renderAccount(); });
+  bus.on('profile:changed', renderAccount);
   updateSyncPill();
   updateBreadcrumbs([]);
+  renderAccount();
 }

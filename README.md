@@ -48,6 +48,7 @@ Burmese readers: [အပြည့်အဝ ဆက်တင်လမ်းညွ�
 
 - Cloud sync with a persistent operation queue, conflict detection and manual resolution
 - Email/password accounts, plus Google/GitHub OAuth once providers are configured
+- Profile: username and profile photo shown in the header, editable on the **Account** page — uploaded photos are cropped and stripped of metadata, and accounts signed up via OAuth get their username and photo from the provider (falling back to the email's local part and a generated initial-avatar)
 - AI assistant, AI-drafted flashcards (which always require your approval) and AI writing help in the editor — via your own Groq key (BYOK) or a server-side proxy
 
 ## Browser requirements
@@ -112,7 +113,8 @@ src/
   styles/                 tokens, themes, typography, layout, components, pages
   vendor/                 pinned third-party libraries (see Licenses)
 supabase/
-  migrations/0001_init.sql     tables, RLS, indexes, private storage bucket
+  migrations/0001_init.sql     tables, RLS, indexes, private export bucket
+  migrations/0002_profiles.sql profiles table, avatar bucket, sign-in trigger
   functions/ai-proxy/index.ts  authenticated Groq proxy (server-side secret)
   README.md                    detailed Supabase instructions
 tests/
@@ -138,11 +140,13 @@ tests/
 > Full step-by-step detail, including CLI commands and the `ai-proxy` error codes, lives in [`supabase/README.md`](supabase/README.md).
 
 1. **Create a project** at <https://supabase.com/dashboard> → *New project*.
-2. **Run the migration** `supabase/migrations/0001_init.sql`:
+2. **Run the migrations** in `supabase/migrations/` (`0001_init.sql`, then `0002_profiles.sql`):
    - CLI: `supabase link --project-ref <ref>` then `supabase db push`
-   - or paste the file into **Dashboard → SQL Editor** and run it
+   - or paste each file into **Dashboard → SQL Editor** and run it in order
 
-   This creates the 7 sync tables (`lessons`, `code_snippets`, `flashcards`, `programming_languages`, `categories`, `courses`, `user_preferences`), every index, and **Row Level Security** policies scoped to `auth.uid() = user_id` for `SELECT`/`INSERT`/`UPDATE`/`DELETE`, plus the private `devnotes-exports` storage bucket. The SQL uses `auth.uid()`, so it must run on Supabase (not plain PostgreSQL).
+   `0001_init.sql` creates the 7 sync tables (`lessons`, `code_snippets`, `flashcards`, `programming_languages`, `categories`, `courses`, `user_preferences`), every index, and **Row Level Security** policies scoped to `auth.uid() = user_id` for `SELECT`/`INSERT`/`UPDATE`/`DELETE`, plus the private `devnotes-exports` storage bucket. The SQL uses `auth.uid()`, so it must run on Supabase (not plain PostgreSQL).
+
+   `0002_profiles.sql` adds the account layer: the `profiles` table (username, display name, bio, avatar — one row per user, RLS-scoped to `auth.uid()`), the `devnotes-avatars` storage bucket, and a trigger that auto-creates and seeds a profile row on a user's first sign-in so the header always has a username and avatar.
 3. **Fill in the frontend values** in `src/scripts/config.js`:
    ```js
    export const SUPABASE = {
@@ -165,9 +169,11 @@ OAuth needs extra Supabase configuration and **will not work until you do it** �
 2. **GitHub**: create an OAuth app under GitHub → *Settings → Developer settings → OAuth applications* with callback URL `https://<ref>.supabase.co/auth/v1/callback`, then paste ID/secret under **Authentication → Providers → GitHub**.
 3. **Redirect URLs**: in **Authentication → URL Configuration**, set *Site URL* to your deployed origin (e.g. `https://your-app.example/`) and add redirect URLs — your deployed origin and, for local work, `http://localhost:4173/`. DevNotes uses the PKCE flow, so the callback path must be listed or the provider rejects the redirect.
 
-### Storage bucket
+### Storage buckets
 
-`supabase/0001_init.sql` creates `devnotes-exports` as a **private** bucket, per-user via `(storage.foldername(name))[1] = auth.uid()::text`. The app **never auto-uploads local files**: exports download to the user's machine; the bucket is only for explicitly configured export flows.
+`supabase/migrations/0001_init.sql` creates `devnotes-exports` as a **private** bucket, per-user via `(storage.foldername(name))[1] = auth.uid()::text`. The app **never auto-uploads local files**: exports download to the user's machine; the bucket is only for explicitly configured export flows.
+
+`supabase/migrations/0002_profiles.sql` creates `devnotes-avatars` for profile photos. It is **public read, owner-only write**: the header renders the photo with `<img src>` on every route, so a private bucket would need a signed URL per render (which expires and breaks offline). The write path stays locked down — `INSERT`/`UPDATE`/`DELETE` policies scope every object to the uploader's own `<uid>/` folder, so no user can replace or delete another user's photo. Photos are re-encoded to a squarish PNG in the browser first (EXIF/metadata stripped), capped at 512 KB. This is a deliberate, documented exception to "private by default" (AGENTS.md §11); the `profiles` *rows* themselves remain private via RLS.
 
 ## AI setup (Groq) — optional
 

@@ -97,10 +97,20 @@ async function requireClient() {
   return client;
 }
 
-export async function signUp({ email, password }) {
+export async function signUp({ email, password, fullName = '', username = '' }) {
   try {
     const client = await requireClient();
-    const { data, error } = await client.auth.signUp({ email, password });
+    // Pass the collected name/handle as user_metadata: the `profiles` bootstrap
+    // trigger reads it to seed the account's display name and username.
+    const options = (fullName || username)
+      ? {
+          data: {
+            ...(fullName ? { full_name: fullName } : {}),
+            ...(username ? { user_name: username } : {}),
+          },
+        }
+      : undefined;
+    const { data, error } = await client.auth.signUp({ email, password, options });
     if (error) throw error;
     // data.session is null when email confirmation is required — report truthfully.
     if (data.session) publish('signed-in', data.user, null);

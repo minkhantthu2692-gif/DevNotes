@@ -38,6 +38,7 @@ export const NAV_ITEMS = NAV_SECTIONS.flatMap((section) => section.items);
 
 /** Lazy page module loaders — native dynamic import keeps the shell small. */
 export const PAGE_LOADERS = {
+  auth: () => import('./pages/auth.js'),
   dashboard: () => import('./pages/dashboard.js'),
   library: () => import('./pages/library.js'),
   languages: () => import('./pages/languages.js'),

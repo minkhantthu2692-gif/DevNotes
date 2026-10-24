@@ -205,6 +205,38 @@ body {
 }
 .topbar__right { margin-left: auto; }
 
+/* Account entry: avatar + username when signed in, plain icon when signed out. */
+.account-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-inline: var(--sp-2);
+  min-height: 2rem;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  color: var(--color-text);
+  cursor: pointer;
+}
+.account-btn:hover {
+  background: var(--color-surface-2);
+  border-color: var(--color-border);
+}
+.account-btn__avatar { border: 1px solid var(--color-border); }
+.account-btn__name {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+/* The username is redundant on narrow screens; keep the avatar only. */
+@media (max-width: 48rem) {
+  .account-btn__name { display: none; }
+}
+
 .breadcrumbs {
   display: flex;
   align-items: center;

@@ -26,6 +26,9 @@ import { isSyncSuspended } from '../sync/sync-queue.js';
 import { ensureSyncChoice, resetSyncChoice } from '../features/auth/sync-choice.js';
 import { refreshSyncStatus } from '../sync/connectivity.js';
 import { formatRelative } from '../utils/format.js';
+import {
+  loadProfile, updateProfile, uploadAvatar, avatarElement, getCachedProfile,
+} from '../features/account/account-service.js';
 
 const ENTITY_LABELS = {
   lesson: 'Lesson',
@@ -72,8 +75,8 @@ function mergeFieldsFor(entity, record) {
 
 export default {
   id: 'account',
-  title: () => 'Account & Sync',
-  breadcrumbs: () => [{ label: 'Account & Sync', path: '/account' }],
+  title: () => 'Account',
+  breadcrumbs: () => [{ label: 'Account', path: '/account' }],
 
   mount(container, ctx) {
     let disposed = false;
@@ -96,6 +99,12 @@ export default {
     /* ------------------------------------------------------------ auth -- */
 
     function authCard() {
+      // Redirect to dedicated auth page when signed out
+      const { status } = authStore.get();
+      if (status !== 'signed-in') {
+        navigate('/auth', { replace: true });
+        return h('div'); // placeholder, will be replaced by navigation
+      }
       let mode = 'signin'; // 'signin' | 'signup'
       let busy = false;
       let notice = null; // { tone, text }
@@ -171,7 +180,7 @@ export default {
       );
 
       if (checkEmail) {
-        return h('div', { class: 'card auth-card' }, [
+        return h('div', { class: 'card account-card' }, [
           h('h2', { class: 'card__title', text: 'Confirm your email' }),
           inlineNote('Account created. Check your inbox for the confirmation link, then sign in here.', 'success'),
           h('button', {
@@ -181,7 +190,7 @@ export default {
         ]);
       }
 
-      return h('div', { class: 'card auth-card' }, [
+      return h('div', { class: 'card account-card' }, [
         h('h2', { class: 'card__title', text: 'Your account' }),
         h('p', { class: 'text-muted', text: 'An account is only needed for cloud sync and the shared AI proxy. Everything works locally without one.' }),
         modeTabs,
@@ -515,6 +524,132 @@ export default {
     // Small shim so merge can pass the extra payload through handleResolve.
     const baseHandleResolve = null;
 
+    /* ------------------------------------------------------- profile --- */
+
+    /**
+     * Profile management card: avatar + username + display name + bio.
+     * The row is written straight to `profiles` (RLS-owned, see
+     * supabase/migrations/0002_profiles.sql). Saves are optimistic and every
+     * failure surfaces a toast with a real recovery path — never a silent drop.
+     */
+    function profileCard() {
+      const profile = getCachedProfile();
+      const usernameInput = h('input', {
+        class: 'input', type: 'text', value: profile?.username || '',
+        attrs: { id: 'profile-username', autocomplete: 'username', maxlength: '30', placeholder: 'your-handle' },
+      });
+      const nameInput = h('input', {
+        class: 'input', type: 'text', value: profile?.fullName || '',
+        attrs: { id: 'profile-name', autocomplete: 'name', maxlength: '80', placeholder: 'Your name' },
+      });
+      const bioInput = h('textarea', {
+        class: 'textarea', value: profile?.bio || '',
+        attrs: { id: 'profile-bio', maxlength: '160', rows: '3', placeholder: 'A short line about you' },
+      });
+      const urlInput = h('input', {
+        class: 'input', type: 'url', value: profile?.avatarUrl || '',
+        attrs: { id: 'profile-avatar-url', placeholder: 'https://…/photo.png', 'aria-describedby': 'profile-avatar-hint' },
+      });
+      const fileInput = h('input', {
+        class: 'profile__file', type: 'file', attrs: { id: 'profile-avatar-file', accept: 'image/png,image/jpeg,image/webp,image/gif,image/avif', 'aria-label': 'Upload a profile photo' },
+      });
+      const avatarHost = h('div', { class: 'profile__avatar-host' }, [avatarElement(profile || {}, { size: 72 })]);
+      const errorHost = h('div', { attrs: { role: 'alert' } });
+
+      const showError = (message) => {
+        clear(errorHost);
+        if (message) errorHost.appendChild(inlineNote(message, 'danger'));
+      };
+
+      function refreshPreview() {
+        clear(avatarHost);
+        avatarHost.appendChild(avatarElement({
+          username: usernameInput.value.trim(),
+          fullName: nameInput.value.trim(),
+          avatarUrl: urlInput.value.trim() || null,
+        }, { size: 72 }));
+      }
+
+      // Live preview as the user types a handle or pastes an image URL.
+      usernameInput.addEventListener('input', refreshPreview);
+      nameInput.addEventListener('input', refreshPreview);
+      urlInput.addEventListener('input', refreshPreview);
+
+      async function onFileChosen() {
+        const file = fileInput.files?.[0];
+        if (!file) return;
+        showError('');
+        try {
+          const url = await uploadAvatar(file);
+          urlInput.value = url;
+          refreshPreview();
+          toast('Profile photo updated', { tone: 'success' });
+        } catch (err) {
+          showError(String(err?.message || err));
+        } finally {
+          // Allow re-choosing the same file next time.
+          fileInput.value = '';
+        }
+      }
+      fileInput.addEventListener('change', () => void onFileChosen());
+
+      async function save() {
+        showError('');
+        try {
+          await updateProfile({
+            username: usernameInput.value.trim(),
+            fullName: nameInput.value.trim(),
+            bio: bioInput.value.trim(),
+            avatarUrl: urlInput.value.trim() || null,
+          });
+          toast('Profile saved', { tone: 'success' });
+          await render();
+        } catch (err) {
+          showError(String(err?.message || err));
+        }
+      }
+
+      return h('div', { class: 'card profile-card' }, [
+        h('h2', { class: 'card__title', text: 'Your profile' }),
+        h('p', { class: 'text-muted', text: 'Your photo and username appear in the header. These are stored in your account and only you can edit them.' }),
+        h('div', { class: 'profile__grid' }, [
+          avatarHost,
+          h('div', { class: 'stack stack--sm' }, [
+            h('div', { class: 'field' }, [
+              h('label', { class: 'field__label', attrs: { for: 'profile-username' }, text: 'Username' }),
+              usernameInput,
+              h('div', { class: 'field__hint', text: 'Letters, numbers, dots, dashes and underscores. This is your public handle.' }),
+            ]),
+            h('div', { class: 'field' }, [
+              h('label', { class: 'field__label', attrs: { for: 'profile-name' }, text: 'Display name' }),
+              nameInput,
+            ]),
+            h('div', { class: 'field' }, [
+              h('label', { class: 'field__label', attrs: { for: 'profile-bio' }, text: 'Bio' }),
+              bioInput,
+              h('div', { class: 'field__hint', text: 'Optional — up to 160 characters.' }),
+            ]),
+          ]),
+        ]),
+        h('div', { class: 'stack stack--sm' }, [
+          h('h3', { class: 'profile__subtitle', text: 'Profile photo' }),
+          h('div', { class: 'field' }, [
+            h('label', { class: 'field__label', attrs: { for: 'profile-avatar-file' }, text: 'Upload an image' }),
+            fileInput,
+            h('div', { class: 'field__hint', attrs: { id: 'profile-avatar-hint' }, text: 'PNG, JPEG, WebP, GIF or AVIF, up to 512 KB. It is cropped to a square.' }),
+          ]),
+          h('div', { class: 'field' }, [
+            h('label', { class: 'field__label', attrs: { for: 'profile-avatar-url' }, text: '…or use an image URL' }),
+            urlInput,
+          ]),
+        ]),
+        errorHost,
+        h('div', { class: 'row gap-2' }, [
+          h('button', { class: 'btn btn--primary', type: 'button', text: 'Save profile', on: { click: () => void save() } }),
+        ]),
+      ]);
+    }
+
     /* ---------------------------------------------------------- render -- */
 
     async function render() {
@@ -524,8 +659,8 @@ export default {
       clear(root);
       root.appendChild(h('header', { class: 'page-header' }, [
         h('div', { class: 'page-header__title' }, [
-          h('h1', { text: 'Account & Sync' }),
-          h('p', { class: 'page-header__subtitle', text: 'Cloud sync is optional. Your library always stays on this device.' }),
+          h('h1', { text: 'Account' }),
+          h('p', { class: 'page-header__subtitle', text: 'Manage your profile, photo and cloud sync. Your library always stays on this device.' }),
         ]),
       ]));
 
@@ -538,7 +673,7 @@ export default {
         root.appendChild(h('div', { class: 'card' }, [
           h('h2', { class: 'card__title', text: 'Sync is not configured' }),
           inlineNote('This build has no Supabase project configured, so there is no account system and no cloud sync. Everything works locally and offline.', 'info'),
-          h('p', { class: 'text-muted', text: 'To enable sync and accounts: create a Supabase project, run supabase/migrations/0001_init.sql, and fill in src/scripts/config.js (see README).' }),
+          h('p', { class: 'text-muted', text: 'To enable sync and accounts: create a Supabase project, run supabase/migrations/0001_init.sql and 0002_profiles.sql, then fill in src/scripts/config.js (see README).' }),
           h('button', { class: 'btn btn--sm', type: 'button', on: { click: () => navigate('/settings?section=sync') } }, [icon('settings'), 'Sync settings']),
         ]));
         return;
@@ -552,11 +687,16 @@ export default {
         return;
       }
 
+      // Make sure the profile is loaded so the header and this card agree.
+      // Never blocks the page: a failed load falls back to derived values.
+      if (!getCachedProfile()) await loadProfile().catch(() => {});
+
+      root.appendChild(profileCard());
       root.appendChild(h('div', { class: 'card' }, [
         h('div', { class: 'row row--between' }, [
           h('div', [
-            h('h2', { class: 'card__title', text: user.email || 'Signed in' }),
-            h('p', { class: 'text-muted', text: `User id: ${String(user.id).slice(0, 8)}…` }),
+            h('h2', { class: 'card__title', text: 'Signed in' }),
+            h('p', { class: 'text-muted', text: `${user.email || ''} · id ${String(user.id).slice(0, 8)}…` }),
           ]),
           h('button', {
             class: 'btn', type: 'button',
